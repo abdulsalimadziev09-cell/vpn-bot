@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY pyproject.toml README.md ./
 COPY app ./app
+COPY amnezia_sites.json ./amnezia_sites.json
+COPY lava-verify_751e93edad61d6f3.html ./lava-verify_751e93edad61d6f3.html
 COPY alembic ./alembic
 COPY alembic.ini ./
 

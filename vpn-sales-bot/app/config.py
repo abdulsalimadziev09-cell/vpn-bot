@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     admin_ids: list[int] = []
 
     payments_enabled: bool = True
+    mini_app_url: str = ""
     http_host: str = "0.0.0.0"
     http_port: int = 8080
 

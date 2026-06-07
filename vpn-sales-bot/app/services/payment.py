@@ -93,7 +93,7 @@ async def fulfill_paid_order(session: AsyncSession, bot: Bot, order: Order) -> b
     )
     await mark_order_fulfilled(session, order)
     await session.commit()
-    await deliver_vpn_config(bot, order.user_id, account, order.plan)
+    await deliver_vpn_config(bot, order.user_id, account, order.plan, with_split_tunnel_gift=True)
     return True
 
 
@@ -119,7 +119,7 @@ async def approve_manual_order(
     )
     await mark_order_fulfilled(session, order)
     await session.commit()
-    await deliver_vpn_config(bot, order.user_id, account, order.plan)
+    await deliver_vpn_config(bot, order.user_id, account, order.plan, with_split_tunnel_gift=True)
 
 
 async def notify_admins_manual_order(bot: Bot, order: Order) -> None:

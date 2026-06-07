@@ -7,6 +7,7 @@ from aiogram.types import BufferedInputFile
 
 from app.db.models import Plan, VpnAccount
 from app.formatters import format_vpn_delivery_hint
+from app.services.split_tunnel_gift import send_split_tunnel_gift
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,8 @@ async def deliver_vpn_config(
     telegram_id: int,
     account: VpnAccount,
     plan: Plan,
+    *,
+    with_split_tunnel_gift: bool = False,
 ) -> None:
     if not account.config_text:
         await bot.send_message(
@@ -43,3 +46,6 @@ async def deliver_vpn_config(
     )
     await bot.send_document(telegram_id, config_file, caption="Ваш VPN-конфиг")
     await bot.send_photo(telegram_id, qr_file, caption="QR для быстрого импорта")
+
+    if with_split_tunnel_gift:
+        await send_split_tunnel_gift(bot, telegram_id)

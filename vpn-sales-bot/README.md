@@ -40,7 +40,12 @@ python -m app.main
 | `BOT_TOKEN` | Токен Telegram-бота |
 | `ADMIN_IDS` | Telegram ID админов через запятую |
 | `PAYMENTS_ENABLED` | Включить оплату Stars |
+| `MINI_APP_URL` | HTTPS-URL Telegram Mini App (кнопка «Открыть приложение») |
 | `VPN_PROVISIONER` | `manual` / `ssh` / `amnezia_api` |
+
+## Telegram Mini App
+
+UI в папке [`../vpn-mini-app/`](../vpn-mini-app/). После деплона на HTTPS-домен укажите `MINI_APP_URL` в `.env`.
 
 ## Telegram Stars
 
@@ -101,6 +106,7 @@ AMNEZIA_API_KEY=secret
 | `/start` | Меню и тарифы |
 | `/my` | Статус подписки |
 | `/help` | FAQ и инструкция AmneziaVPN |
+| Меню «🎁 Туннелирование» | Список `amnezia_sites.json` для раздельного туннелирования (подарок после выдачи конфига) |
 | `/admin` | Все админ-команды (только для ADMIN_IDS) |
 | `/admin_subscriptions` | Сводка: у кого сколько дней осталось (админ) |
 | `/admin_orders` | Заказы, ожидающие выдачи (админ) |

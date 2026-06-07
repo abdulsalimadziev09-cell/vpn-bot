@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 
 from app.db.models import Plan
 
@@ -13,11 +13,23 @@ def admin_menu_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def main_menu_keyboard(*, show_trial: bool = True, is_admin: bool = False) -> InlineKeyboardMarkup:
-    rows: list[list[InlineKeyboardButton]] = [
+def main_menu_keyboard(
+    *,
+    show_trial: bool = True,
+    is_admin: bool = False,
+    mini_app_url: str | None = None,
+) -> InlineKeyboardMarkup:
+    rows: list[list[InlineKeyboardButton]] = []
+    if mini_app_url:
+        rows.append(
+            [InlineKeyboardButton(text="🌐 Открыть приложение", web_app=WebAppInfo(url=mini_app_url))]
+        )
+    rows.extend(
+        [
         [InlineKeyboardButton(text="Тарифы", callback_data="menu:plans")],
         [InlineKeyboardButton(text="Моя подписка", callback_data="menu:my")],
-    ]
+        ]
+    )
     if show_trial:
         rows.append([InlineKeyboardButton(text="🎁 Пробный период 1 день", callback_data="menu:trial")])
     if is_admin:
@@ -32,6 +44,7 @@ def main_menu_keyboard(*, show_trial: bool = True, is_admin: bool = False) -> In
                 InlineKeyboardButton(text="Приведи друга", callback_data="menu:referral"),
                 InlineKeyboardButton(text="Инструкция", callback_data="menu:help"),
             ],
+            [InlineKeyboardButton(text="🎁 Туннелирование", callback_data="menu:split_tunnel")],
         ]
     )
     return InlineKeyboardMarkup(inline_keyboard=rows)
@@ -52,6 +65,7 @@ def my_subscription_keyboard(reminders_enabled: bool = True) -> InlineKeyboardMa
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="Получить конфиг", callback_data="my:config")],
+            [InlineKeyboardButton(text="🎁 Список для туннелирования", callback_data="menu:split_tunnel")],
             [InlineKeyboardButton(text="Продлить", callback_data="menu:plans")],
             [InlineKeyboardButton(text=reminder_label, callback_data=reminder_data)],
             [InlineKeyboardButton(text="Назад", callback_data="menu:main")],
