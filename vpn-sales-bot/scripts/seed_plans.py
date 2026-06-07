@@ -8,9 +8,9 @@ from app.db.models import Plan
 from app.db.session import async_session_factory
 
 DEFAULT_PLANS = [
-    ("month_1", "1 месяц", 30, 299, 50),
-    ("month_3", "3 месяца", 90, 799, 120),
-    ("year_1", "1 год", 365, 2499, 350),
+    ("month_1", "1 месяц", 30, 299, 150),
+    ("month_3", "3 месяца", 90, 799, 400),
+    ("year_1", "1 год", 365, 2499, 1000),
 ]
 
 
