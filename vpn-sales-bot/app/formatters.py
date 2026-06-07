@@ -86,6 +86,54 @@ def format_referral_info(bot_username: str, telegram_id: int, invited_count: int
     )
 
 
+def format_user_label(telegram_id: int, username: str | None) -> str:
+    return f"@{username}" if username else f"id {telegram_id}"
+
+
+def format_admin_subscription_line(subscription: Subscription) -> str:
+    user = subscription.user
+    days_left = subscription_days_remaining(subscription)
+    days_word = _days_word(days_left)
+    expires = subscription.expires_at.astimezone(timezone.utc).strftime("%d.%m.%Y %H:%M")
+    label = format_user_label(user.telegram_id, user.username) if user else f"id {subscription.user_id}"
+    trial_mark = " 🎁" if days_left <= settings.trial_days else ""
+    return (
+        f"{label}{trial_mark} — осталось {days_left} {days_word} — до {expires} UTC "
+        f"({subscription.plan.title})"
+    )
+
+
+def build_admin_subscriptions_report(subscriptions: list[Subscription]) -> list[str]:
+    if not subscriptions:
+        return ["📊 Активных подписок нет."]
+
+    lines = [f"📊 Активные подписки ({len(subscriptions)})\n"]
+    for index, subscription in enumerate(subscriptions, start=1):
+        lines.append(f"{index}. {format_admin_subscription_line(subscription)}")
+
+    text = "\n".join(lines)
+    return _split_telegram_message(text)
+
+
+def _split_telegram_message(text: str, limit: int = 4000) -> list[str]:
+    if len(text) <= limit:
+        return [text]
+
+    chunks: list[str] = []
+    current = ""
+    for line in text.split("\n"):
+        candidate = f"{current}\n{line}".strip() if current else line
+        if len(candidate) > limit:
+            if current:
+                chunks.append(current)
+            current = line
+        else:
+            current = candidate
+    if current:
+        chunks.append(current)
+    return chunks
+
+
 def format_expiry_reminder(days_left: int) -> str:
     days_word = _days_word(days_left)
     return (

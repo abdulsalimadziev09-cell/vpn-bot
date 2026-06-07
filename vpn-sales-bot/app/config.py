@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     expire_poll_minutes: int = 60
     retry_fulfillment_minutes: int = 15
 
+    admin_subscription_report_enabled: bool = True
+    admin_subscription_report_hours: int = 12
+
     @field_validator("admin_ids", mode="before")
     @classmethod
     def parse_admin_ids(cls, value: str | int | list[int] | None) -> list[int]:

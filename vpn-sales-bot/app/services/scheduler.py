@@ -12,6 +12,7 @@ from app.repositories.subscriptions import (
     list_expired_active,
     list_expiring_subscriptions,
 )
+from app.services.admin_report import send_admin_subscriptions_report
 from app.services.payment import fulfill_paid_order
 from app.services.subscription import expire_subscription
 from app.services.vpn_provisioner import get_provisioner
@@ -102,6 +103,14 @@ def setup_scheduler(bot: Bot) -> AsyncIOScheduler:
         minutes=settings.retry_fulfillment_minutes,
         args=[bot],
         id="retry_fulfillment",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        send_admin_subscriptions_report,
+        "interval",
+        hours=settings.admin_subscription_report_hours,
+        args=[bot],
+        id="admin_subscription_report",
         replace_existing=True,
     )
     return scheduler

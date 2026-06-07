@@ -101,6 +101,8 @@ AMNEZIA_API_KEY=secret
 | `/start` | Меню и тарифы |
 | `/my` | Статус подписки |
 | `/help` | FAQ и инструкция AmneziaVPN |
+| `/admin` | Все админ-команды (только для ADMIN_IDS) |
+| `/admin_subscriptions` | Сводка: у кого сколько дней осталось (админ) |
 | `/admin_orders` | Заказы, ожидающие выдачи (админ) |
 | `/admin_approve <id>` | Ручная выдача конфига (админ) |
 

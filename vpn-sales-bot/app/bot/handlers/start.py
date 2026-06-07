@@ -2,6 +2,7 @@ from aiogram import Router
 from aiogram.filters import CommandObject, CommandStart
 from aiogram.types import CallbackQuery, Message
 
+from app.bot.admin_text import format_admin_help, is_admin
 from app.bot.keyboards import main_menu_keyboard
 from app.db.session import async_session_factory
 from app.repositories.referrals import attach_referrer, parse_referral_start_arg
@@ -39,12 +40,22 @@ async def cmd_start(message: Message, command: CommandObject) -> None:
     if attached:
         text += "\n\nВы перешли по реферальной ссылке. Спасибо!"
 
-    await message.answer(text, reply_markup=main_menu_keyboard(show_trial=show_trial))
+    user_is_admin = is_admin(message.from_user.id)
+    await message.answer(
+        text,
+        reply_markup=main_menu_keyboard(show_trial=show_trial, is_admin=user_is_admin),
+    )
+    if user_is_admin:
+        await message.answer(format_admin_help())
 
 
 @router.callback_query(lambda c: c.data == "menu:main")
 async def menu_main(callback: CallbackQuery) -> None:
     async with async_session_factory() as session:
         show_trial = await can_start_trial(session, callback.from_user.id)
-    await callback.message.edit_text(WELCOME_TEXT, reply_markup=main_menu_keyboard(show_trial=show_trial))
+    user_is_admin = is_admin(callback.from_user.id)
+    await callback.message.edit_text(
+        WELCOME_TEXT,
+        reply_markup=main_menu_keyboard(show_trial=show_trial, is_admin=user_is_admin),
+    )
     await callback.answer()

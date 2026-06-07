@@ -7,6 +7,20 @@ from sqlalchemy.orm import joinedload
 from app.db.models import Plan, Subscription, SubscriptionStatus, VpnAccount
 
 
+async def list_active_subscriptions(session: AsyncSession) -> list[Subscription]:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(Subscription)
+        .options(joinedload(Subscription.plan), joinedload(Subscription.user))
+        .where(
+            Subscription.status == SubscriptionStatus.ACTIVE,
+            Subscription.expires_at > now,
+        )
+        .order_by(Subscription.expires_at.asc())
+    )
+    return list(result.scalars().unique().all())
+
+
 async def get_active_subscription(session: AsyncSession, user_id: int) -> Subscription | None:
     now = datetime.now(timezone.utc)
     result = await session.execute(

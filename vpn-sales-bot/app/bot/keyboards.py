@@ -3,13 +3,25 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from app.db.models import Plan
 
 
-def main_menu_keyboard(*, show_trial: bool = True) -> InlineKeyboardMarkup:
+def admin_menu_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Заказы без конфига", callback_data="admin:orders")],
+            [InlineKeyboardButton(text="Сводка подписок", callback_data="admin:subscriptions")],
+            [InlineKeyboardButton(text="Назад в меню", callback_data="menu:main")],
+        ]
+    )
+
+
+def main_menu_keyboard(*, show_trial: bool = True, is_admin: bool = False) -> InlineKeyboardMarkup:
     rows: list[list[InlineKeyboardButton]] = [
         [InlineKeyboardButton(text="Тарифы", callback_data="menu:plans")],
         [InlineKeyboardButton(text="Моя подписка", callback_data="menu:my")],
     ]
     if show_trial:
         rows.append([InlineKeyboardButton(text="🎁 Пробный период 1 день", callback_data="menu:trial")])
+    if is_admin:
+        rows.append([InlineKeyboardButton(text="🔧 Админ", callback_data="menu:admin")])
     rows.extend(
         [
             [
