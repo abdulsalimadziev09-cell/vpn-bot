@@ -45,11 +45,21 @@ class User(Base):
     telegram_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     username: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    referred_by_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("users.telegram_id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    expiry_reminders_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     orders: Mapped[list["Order"]] = relationship(back_populates="user")
     subscriptions: Mapped[list["Subscription"]] = relationship(back_populates="user")
     vpn_accounts: Mapped[list["VpnAccount"]] = relationship(back_populates="user")
+    referrals_made: Mapped[list["Referral"]] = relationship(
+        back_populates="referrer",
+        foreign_keys="Referral.referrer_id",
+    )
 
 
 class Plan(Base):
@@ -109,6 +119,7 @@ class Subscription(Base):
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[str] = mapped_column(String(16), default=SubscriptionStatus.ACTIVE, server_default=SubscriptionStatus.ACTIVE)
+    reminded_7d: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     reminded_3d: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     reminded_1d: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -116,6 +127,18 @@ class Subscription(Base):
     user: Mapped["User"] = relationship(back_populates="subscriptions")
     plan: Mapped["Plan"] = relationship(back_populates="subscriptions")
     vpn_accounts: Mapped[list["VpnAccount"]] = relationship(back_populates="subscription")
+
+
+class Referral(Base):
+    __tablename__ = "referrals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    referrer_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.telegram_id"), nullable=False)
+    referred_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.telegram_id"), nullable=False, unique=True)
+    bonus_granted: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    referrer: Mapped["User"] = relationship(back_populates="referrals_made", foreign_keys=[referrer_id])
 
 
 class VpnAccount(Base):

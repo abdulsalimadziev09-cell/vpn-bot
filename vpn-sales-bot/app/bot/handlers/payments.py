@@ -5,7 +5,7 @@ from app.config import settings
 from app.db.models import Order, OrderStatus, Plan
 from app.db.session import async_session_factory
 from app.repositories.orders import get_order_by_id
-from app.services.payment import fulfill_paid_order, mark_order_paid_from_stars
+from app.services.payment import fulfill_paid_order, handle_paid_order_extras, mark_order_paid_from_stars
 
 router = Router()
 
@@ -75,6 +75,7 @@ async def successful_payment(message: Message) -> None:
         if not order:
             return
 
+        await handle_paid_order_extras(session, message.bot, order)
         fulfilled = await fulfill_paid_order(session, message.bot, order)
         if fulfilled:
             await message.answer("Спасибо! VPN-конфиг отправлен выше.")

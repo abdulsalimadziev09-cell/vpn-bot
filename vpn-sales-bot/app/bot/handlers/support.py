@@ -3,6 +3,7 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
 from app.bot.keyboards import main_menu_keyboard
+from app.bot.keyboards import back_to_menu_keyboard
 from app.formatters import format_vpn_delivery_hint
 
 router = Router()
@@ -28,5 +29,5 @@ async def cmd_help(message: Message) -> None:
 
 @router.callback_query(F.data == "menu:help")
 async def menu_help(callback: CallbackQuery) -> None:
-    await callback.message.edit_text(HELP_TEXT, reply_markup=main_menu_keyboard())
+    await callback.message.edit_text(HELP_TEXT, reply_markup=back_to_menu_keyboard())
     await callback.answer()

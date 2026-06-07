@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     amnezia_api_url: str = ""
     amnezia_api_key: str = ""
 
+    referral_bonus_days: int = 7
+
     expiry_check_hours: int = 6
     expire_poll_minutes: int = 60
     retry_fulfillment_minutes: int = 15

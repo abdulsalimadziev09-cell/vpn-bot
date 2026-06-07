@@ -46,7 +46,17 @@ async def mark_order_paid_from_stars(
     order.paid_at = datetime.now(timezone.utc)
     await activate_or_extend_subscription(session, order.user_id, order.plan)
     await session.commit()
+
     return order
+
+
+async def handle_paid_order_extras(session: AsyncSession, bot: Bot, order: Order) -> None:
+    from app.services.referral import process_referral_bonus
+
+    if order.status != OrderStatus.PAID:
+        return
+    await process_referral_bonus(session, bot, order.user_id)
+    await session.commit()
 
 
 async def fulfill_paid_order(session: AsyncSession, bot: Bot, order: Order) -> bool:

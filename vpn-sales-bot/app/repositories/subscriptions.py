@@ -39,7 +39,9 @@ async def list_expiring_subscriptions(
             Subscription.expires_at <= deadline,
         )
     )
-    if reminded_field == "reminded_3d":
+    if reminded_field == "reminded_7d":
+        query = query.where(Subscription.reminded_7d.is_(False))
+    elif reminded_field == "reminded_3d":
         query = query.where(Subscription.reminded_3d.is_(False))
     elif reminded_field == "reminded_1d":
         query = query.where(Subscription.reminded_1d.is_(False))

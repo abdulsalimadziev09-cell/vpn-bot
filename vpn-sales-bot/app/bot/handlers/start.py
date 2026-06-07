@@ -1,8 +1,11 @@
 from aiogram import Router
-from aiogram.filters import Command
+from aiogram.filters import CommandObject, CommandStart
 from aiogram.types import CallbackQuery, Message
 
 from app.bot.keyboards import main_menu_keyboard
+from app.db.session import async_session_factory
+from app.repositories.referrals import attach_referrer, parse_referral_start_arg
+from app.repositories.users import get_or_create_user
 
 router = Router()
 
@@ -10,13 +13,30 @@ router = Router()
 WELCOME_TEXT = (
     "Добро пожаловать в VPN-магазин.\n\n"
     "Быстрый и стабильный VPN на базе AmneziaWG.\n"
-    "Выберите тариф, оплатите и получите персональный конфиг в этом чате."
+    "Выберите тариф, оплатите Stars и получите персональный конфиг в этом чате."
 )
 
 
-@router.message(Command("start"))
-async def cmd_start(message: Message) -> None:
-    await message.answer(WELCOME_TEXT, reply_markup=main_menu_keyboard())
+@router.message(CommandStart())
+async def cmd_start(message: Message, command: CommandObject) -> None:
+    referrer_id = parse_referral_start_arg(command.args)
+    attached = False
+
+    async with async_session_factory() as session:
+        user = await get_or_create_user(
+            session,
+            message.from_user.id,
+            message.from_user.username,
+        )
+        if referrer_id:
+            attached = await attach_referrer(session, user, referrer_id)
+        await session.commit()
+
+    text = WELCOME_TEXT
+    if attached:
+        text += "\n\nВы перешли по реферальной ссылке. Спасибо!"
+
+    await message.answer(text, reply_markup=main_menu_keyboard())
 
 
 @router.callback_query(lambda c: c.data == "menu:main")

@@ -5,6 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.config import settings
 from app.db.session import async_session_factory
+from app.formatters import format_expiry_reminder, subscription_days_remaining
 from app.repositories.orders import list_paid_unfulfilled
 from app.repositories.subscriptions import (
     get_vpn_account_for_subscription,
@@ -20,14 +21,22 @@ logger = logging.getLogger(__name__)
 
 async def check_expiring_subscriptions(bot: Bot) -> None:
     async with async_session_factory() as session:
-        for field, days, text in (
-            ("reminded_3d", 3, "Подписка VPN заканчивается через 3 дня. Продлите через /start."),
-            ("reminded_1d", 1, "Подписка VPN заканчивается завтра. Продлите через /start."),
+        for field, days in (
+            ("reminded_7d", 7),
+            ("reminded_3d", 3),
+            ("reminded_1d", 1),
         ):
             subscriptions = await list_expiring_subscriptions(session, days, field)
             for subscription in subscriptions:
+                user = subscription.user
+                if user and not user.expiry_reminders_enabled:
+                    continue
+                days_left = subscription_days_remaining(subscription)
                 try:
-                    await bot.send_message(subscription.user_id, text)
+                    await bot.send_message(
+                        subscription.user_id,
+                        format_expiry_reminder(days_left),
+                    )
                     setattr(subscription, field, True)
                 except Exception:
                     logger.exception("Failed expiry reminder for user %s", subscription.user_id)

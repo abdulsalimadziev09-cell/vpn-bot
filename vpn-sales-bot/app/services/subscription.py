@@ -22,6 +22,7 @@ async def activate_or_extend_subscription(
     if subscription:
         subscription.expires_at = subscription.expires_at + timedelta(days=plan.days)
         subscription.plan_id = plan.id
+        subscription.reminded_7d = False
         subscription.reminded_3d = False
         subscription.reminded_1d = False
         return subscription
