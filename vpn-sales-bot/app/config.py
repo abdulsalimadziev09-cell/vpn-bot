@@ -30,12 +30,16 @@ class Settings(BaseSettings):
 
     @field_validator("admin_ids", mode="before")
     @classmethod
-    def parse_admin_ids(cls, value: str | list[int]) -> list[int]:
+    def parse_admin_ids(cls, value: str | int | list[int] | None) -> list[int]:
+        if value is None:
+            return []
+        if isinstance(value, int):
+            return [value]
         if isinstance(value, str):
             if not value.strip():
                 return []
             return [int(item.strip()) for item in value.split(",") if item.strip()]
-        return value
+        return list(value)
 
 
 settings = Settings()
