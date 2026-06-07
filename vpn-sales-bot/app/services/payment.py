@@ -125,8 +125,9 @@ async def approve_manual_order(
 async def notify_admins_manual_order(bot: Bot, order: Order) -> None:
     from app.formatters import format_order_admin
 
+    kind = "Пробный период" if order.amount == 0 else "Оплата"
     text = (
-        "Новая оплата, требуется ручная выдача конфига.\n\n"
+        f"{kind}: требуется ручная выдача конфига.\n\n"
         f"{format_order_admin(order)}\n\n"
         f"Команда: /admin_approve {order.id}\n"
         "После создания клиента на VPS отправьте .conf ответом на эту команду."

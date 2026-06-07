@@ -3,11 +3,15 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from app.db.models import Plan
 
 
-def main_menu_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Тарифы", callback_data="menu:plans")],
-            [InlineKeyboardButton(text="Моя подписка", callback_data="menu:my")],
+def main_menu_keyboard(*, show_trial: bool = True) -> InlineKeyboardMarkup:
+    rows: list[list[InlineKeyboardButton]] = [
+        [InlineKeyboardButton(text="Тарифы", callback_data="menu:plans")],
+        [InlineKeyboardButton(text="Моя подписка", callback_data="menu:my")],
+    ]
+    if show_trial:
+        rows.append([InlineKeyboardButton(text="🎁 Пробный период 1 день", callback_data="menu:trial")])
+    rows.extend(
+        [
             [
                 InlineKeyboardButton(text="Скачать AmneziaVPN", callback_data="menu:download"),
                 InlineKeyboardButton(text="О сервисе", callback_data="menu:about"),
@@ -18,6 +22,7 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
             ],
         ]
     )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def plans_keyboard(plans: list[Plan]) -> InlineKeyboardMarkup:

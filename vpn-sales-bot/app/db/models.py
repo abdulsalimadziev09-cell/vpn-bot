@@ -51,6 +51,7 @@ class User(Base):
         nullable=True,
     )
     expiry_reminders_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    trial_used: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     orders: Mapped[list["Order"]] = relationship(back_populates="user")
