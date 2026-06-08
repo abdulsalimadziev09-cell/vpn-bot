@@ -65,15 +65,7 @@ async def send_vpn_config_files(
             f"{vpn_uri}\n".encode("utf-8"),
             filename=f"{client_name}.vpn",
         )
-        qr_file = BufferedInputFile(_qr_bytes(vpn_uri), filename=f"{client_name}.png")
         await bot.send_document(chat_id, vpn_file, caption="Конфиг AmneziaVPN (.vpn)")
-        await bot.send_photo(chat_id, qr_file, caption="QR: импорт vpn:// в AmneziaVPN")
-        await bot.send_message(
-            chat_id,
-            "Скопируйте ссылку ниже, если QR не сработал:\n"
-            f"<code>{vpn_uri}</code>",
-            parse_mode="HTML",
-        )
     else:
         fallback_conf = config_text
         if not settings.vpn_skip_awg_enrichment and not is_vpn_uri(config_text):
