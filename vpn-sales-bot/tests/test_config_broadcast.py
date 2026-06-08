@@ -79,7 +79,7 @@ def test_format_config_resend_broadcast_header():
     text = format_config_resend_broadcast_header()
     assert "извинения" in text.lower()
     assert "работает" in text.lower()
-    assert "AmneziaVPN" in text
+    assert "AmneziaWG" in text
 
 
 def test_format_config_broadcast_report():

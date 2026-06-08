@@ -61,7 +61,7 @@ def main_menu_keyboard(
     rows.extend(
         [
             [
-                InlineKeyboardButton(text="Скачать AmneziaVPN", callback_data="menu:download"),
+                InlineKeyboardButton(text="Скачать AmneziaWG", callback_data="menu:download"),
                 InlineKeyboardButton(text="О сервисе", callback_data="menu:about"),
             ],
             [

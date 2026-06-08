@@ -4,8 +4,9 @@ from app.config import settings
 from app.db.models import Order, Plan, Subscription, VpnAccount
 from app.repositories.stats import AdminStats
 
-AMNEZIA_IOS_URL = "https://apps.apple.com/by/app/amneziavpn/id1600529900"
-AMNEZIA_ANDROID_URL = "https://play.google.com/store/apps/details?id=org.amnezia.vpn&hl=ru"
+AMNEZIAWG_IOS_URL = "https://apps.apple.com/app/amneziawg/id6478942365"
+AMNEZIAWG_ANDROID_URL = "https://play.google.com/store/apps/details?id=org.amnezia.awg&hl=ru"
+AMNEZIAWG_WINDOWS_URL = "https://github.com/amnezia-vpn/amneziawg-windows-client/releases"
 
 
 def subscription_days_remaining(subscription: Subscription) -> int:
@@ -80,10 +81,12 @@ def client_name_for_user(telegram_id: int) -> str:
 
 def format_download_app() -> str:
     return (
-        "Скачайте AmneziaVPN:\n\n"
-        f"📱 iOS: {AMNEZIA_IOS_URL}\n"
-        f"🤖 Android: {AMNEZIA_ANDROID_URL}\n\n"
-        "После установки импортируйте .vpn или отсканируйте QR из этого бота."
+        "Скачайте клиент AmneziaWG:\n\n"
+        f"📱 iOS: {AMNEZIAWG_IOS_URL}\n"
+        f"🤖 Android: {AMNEZIAWG_ANDROID_URL}\n"
+        f"💻 Windows: {AMNEZIAWG_WINDOWS_URL}\n\n"
+        "После установки импортируйте файл .vpn из этого бота "
+        "(внутри vpn:// JSON, который генерирует сервер AWG)."
     )
 
 
@@ -94,7 +97,7 @@ def format_about_service() -> str:
         "стабильный протокол с обфускацией для обхода блокировок.\n\n"
         "• Один ключ — один пользователь\n"
         "• Оплата через Telegram Stars\n"
-        "• Конфиг и QR приходят сразу после оплаты\n"
+        "• Конфиг .vpn (vpn:// JSON от AWG-сервера) приходит сразу после оплаты\n"
         "• Напоминания перед окончанием подписки\n"
         f"• Пробный период: {settings.trial_days} {_days_word(settings.trial_days)} (один раз)\n"
         f"• Бонус за друга: +{settings.referral_bonus_days} {_days_word(settings.referral_bonus_days)}\n\n"
@@ -175,12 +178,12 @@ def format_expiry_reminder(days_left: int) -> str:
 def format_vpn_delivery_hint() -> str:
     return (
         "Как подключиться:\n"
-        f"1. Скачайте AmneziaVPN на iOS: {AMNEZIA_IOS_URL}\n"
-        f"2. Скачайте AmneziaVPN на Android: {AMNEZIA_ANDROID_URL}\n"
-        "3. Откройте приложение → «Импорт конфигурации»\n"
-        "4. Выберите файл .vpn или вставьте vpn:// из сообщения\n"
+        f"1. Скачайте AmneziaWG на iOS: {AMNEZIAWG_IOS_URL}\n"
+        f"2. Скачайте AmneziaWG на Android: {AMNEZIAWG_ANDROID_URL}\n"
+        "3. Откройте AmneziaWG → «Импорт конфигурации»\n"
+        "4. Выберите файл .vpn из бота (vpn:// JSON от сервера AWG)\n"
         "5. Подключитесь к VPN\n\n"
-        "Если интернет пропал, а VPN «подключён» — выключите и включите VPN в AmneziaVPN.\n"
+        "Если интернет пропал, а VPN «подключён» — выключите и включите VPN в AmneziaWG.\n"
         "Актуальный .vpn: /my → «Получить конфиг»."
     )
 

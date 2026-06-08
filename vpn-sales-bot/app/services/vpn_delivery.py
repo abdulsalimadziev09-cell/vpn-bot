@@ -42,7 +42,7 @@ def _build_vpn_uri(config_text: str) -> str | None:
     try:
         return conf_to_vpn_uri(source, **_amnezia_export_kwargs())
     except AmneziaExportError:
-        logger.exception("Failed to convert WireGuard conf to Amnezia vpn:// URI")
+        logger.exception("Failed to convert AWG .conf to AmneziaWG vpn:// URI")
         return None
 
 
@@ -64,7 +64,7 @@ async def send_vpn_config_files(
             f"{vpn_uri}\n".encode("utf-8"),
             filename=f"{client_name}.vpn",
         )
-        await bot.send_document(chat_id, vpn_file, caption="Конфиг AmneziaVPN (.vpn)")
+        await bot.send_document(chat_id, vpn_file, caption="Конфиг AmneziaWG (.vpn, vpn:// JSON)")
     else:
         fallback_conf = config_text
         if not settings.vpn_skip_awg_enrichment and not is_vpn_uri(config_text):

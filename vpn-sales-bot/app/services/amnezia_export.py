@@ -1,4 +1,4 @@
-"""Convert WireGuard/AWG .conf text to Amnezia vpn:// URI."""
+"""Convert WireGuard/AWG .conf text to AmneziaWG vpn:// JSON URI."""
 
 from __future__ import annotations
 

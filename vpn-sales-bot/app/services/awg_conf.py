@@ -165,8 +165,8 @@ def format_awg_diagnostic(conf_text: str, *, expected_port: int = 0) -> str:
     if info.get("source") == "vpnuri":
         return (
             "Параметры выданного конфига:\n"
-            "• Источник: .vpnuri (готовый vpn:// от AWG installer)\n"
-            "• I1 (junk-пакет): встроен в vpn://"
+            "• Источник: .vpnuri (vpn:// JSON от bivlked AWG installer)\n"
+            "• I1 (junk-пакет): встроен в vpn:// JSON"
         )
 
     lines = [

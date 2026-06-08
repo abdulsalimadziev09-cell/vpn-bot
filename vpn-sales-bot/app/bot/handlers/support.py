@@ -11,7 +11,8 @@ router = Router()
 HELP_TEXT = (
     "FAQ\n\n"
     "1. Какое приложение нужно?\n"
-    "   AmneziaVPN — https://amnezia.org\n\n"
+    "   AmneziaWG — клиент для протокола AWG:\n"
+    "   https://docs.amnezia.org/documentation/alternative-clients/\n\n"
     "2. Как получить доступ после оплаты?\n"
     "   Бот пришлёт файл .vpn в этот чат.\n\n"
     "3. Можно ли использовать на нескольких устройствах?\n"
