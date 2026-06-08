@@ -42,5 +42,14 @@ class Settings(BaseSettings):
             return [int(item.strip()) for item in value.split(",") if item.strip()]
         return list(value)
 
+    @field_validator("telegram_api_id", mode="before")
+    @classmethod
+    def parse_telegram_api_id(cls, value: str | int | None) -> int:
+        if value is None:
+            return 0
+        if isinstance(value, str) and not value.strip():
+            return 0
+        return int(value)
+
 
 settings = Settings()
