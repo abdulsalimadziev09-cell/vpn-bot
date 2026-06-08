@@ -103,8 +103,7 @@ class SshScriptProvisioner(VpnProvisioner):
         keepalive = settings.ssh_awg_persistent_keepalive
         modify_command = _ssh_management_command(
             settings.ssh_add_client_script,
-            f"modify PersistentKeepalive {keepalive}",
-            client_name,
+            f"modify {client_name} PersistentKeepalive {keepalive}",
         )
         regen_command = _ssh_management_command(
             settings.ssh_add_client_script,
@@ -187,11 +186,19 @@ def is_vpn_uri(config_text: str) -> bool:
     return config_text.strip().startswith("vpn://")
 
 
-def _ssh_management_command(script: str, args: str, client_name: str) -> str:
+def _ssh_management_command(
+    script: str,
+    args: str,
+    client_name: str | None = None,
+) -> str:
     args = args.strip()
+    if client_name:
+        command_args = f"{args} {client_name}".strip()
+    else:
+        command_args = args
     if settings.ssh_invoke_with_bash:
-        return f"sudo bash {script} {args} {client_name}"
-    return f"sudo {script} {args} {client_name}"
+        return f"sudo bash {script} {command_args}"
+    return f"sudo {script} {command_args}"
 
 
 def _client_artifact_paths(

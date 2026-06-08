@@ -113,7 +113,7 @@ async def test_run_add_client_applies_keepalive_and_regen(monkeypatch):
     assert config_text == "vpn://UPDATED"
     assert (
         conn.run.await_args_list[1].args[0]
-        == "sudo bash /root/awg/manage_amneziawg.sh modify PersistentKeepalive 15 tg_1"
+        == "sudo bash /root/awg/manage_amneziawg.sh modify tg_1 PersistentKeepalive 15"
     )
     assert conn.run.await_args_list[2].args[0] == "sudo bash /root/awg/manage_amneziawg.sh regen tg_1"
 
