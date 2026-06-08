@@ -22,12 +22,13 @@ STARS_BY_CODE = {
 
 
 def upgrade() -> None:
+    connection = op.get_bind()
     for code, stars in STARS_BY_CODE.items():
-        op.execute(
+        connection.execute(
             sa.text("UPDATE plans SET stars_price = :stars WHERE code = :code"),
             {"stars": stars, "code": code},
         )
-    op.execute(sa.text("UPDATE plans SET is_active = false WHERE code = 'year_1'"))
+    connection.execute(sa.text("UPDATE plans SET is_active = false WHERE code = 'year_1'"))
 
 
 def downgrade() -> None:
@@ -35,9 +36,10 @@ def downgrade() -> None:
         "month_1": 150,
         "month_3": 400,
     }
+    connection = op.get_bind()
     for code, stars in old_prices.items():
-        op.execute(
+        connection.execute(
             sa.text("UPDATE plans SET stars_price = :stars WHERE code = :code"),
             {"stars": stars, "code": code},
         )
-    op.execute(sa.text("UPDATE plans SET is_active = true WHERE code = 'year_1'"))
+    connection.execute(sa.text("UPDATE plans SET is_active = true WHERE code = 'year_1'"))

@@ -46,7 +46,7 @@ MINI_APP_URL=https://your-domain.example/
 ### 3. Обменник Stars
 
 ```bash
-cd stars-exchange-bot
+cd ../stars-exchange-bot
 docker compose up -d --build
 ```
 
