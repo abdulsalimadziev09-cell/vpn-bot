@@ -84,25 +84,30 @@ UPDATE plans SET is_active = false WHERE code = 'year_1';
 
 и отправьте содержимое `.conf`.
 
-### ssh
+### ssh (bivlked AWG installer)
 
-Автовыдача `.vpn` (`vpn://`) после оплаты; при **продлении** тот же конфиг переиспользуется (новый клиент на VPS не создаётся).  
-При **истечении** подписки scheduler вызывает `--remove-client` на VPS.
+На VPS: [bivlked/amneziawg-installer](https://github.com/bivlked/amneziawg-installer).  
+Бот вызывает `manage_amneziawg.sh add/remove`, читает `.vpnuri` и шлёт `vpn://` в Telegram.
 
 ```env
 VPN_PROVISIONER=ssh
 SSH_HOST=your-vps-ip
-SSH_USER=deploy
+SSH_USER=root
 SSH_PASSWORD=your-password
-SSH_KEY_PATH=
-SSH_ADD_CLIENT_SCRIPT=/opt/awg/amneziawg-install.sh
-SSH_CONFIG_DIR=/etc/amnezia/amneziawg/clients
-AMNEZIA_HOST=your-vps-ip
-AMNEZIA_DNS1=1.1.1.1
-AMNEZIA_DNS2=1.0.0.1
+SSH_ADD_CLIENT_SCRIPT=/root/awg/manage_amneziawg.sh
+SSH_ADD_CLIENT_ARGS=add
+SSH_REMOVE_CLIENT_ARGS=remove
+SSH_CONFIG_DIR=/root/awg
+SSH_INVOKE_WITH_BASH=true
+VPN_SKIP_AWG_ENRICHMENT=true
+SSH_MERGE_SERVER_AWG_PARAMS=false
 ```
 
-Аутентификация: пароль (`SSH_PASSWORD`) и/или ключ (`SSH_KEY_PATH`). Достаточно одного способа.
+Проверка: `/admin_vpn_add test` → `.vpn` в чат, на VPS `sudo awg show awg0`.
+
+Legacy wiresock: см. закомментированные строки в `.env.example`.
+
+Аутентификация: пароль (`SSH_PASSWORD`) и/или ключ (`SSH_KEY_PATH`).
 
 ### amnezia_api
 
@@ -143,9 +148,9 @@ AMNEZIA_API_KEY=secret
 Конвертация `.conf` → `.vpn` **не переносит** клиента на другой сервер. Нужен **один** AWG-стек:
 
 1. Оставить рабочий Amnezia-сервер (`47661`) и выдавать конфиги через `amnezia_api` или вручную (`VPN_PROVISIONER=manual`).
-2. Либо убрать Amnezia docker и оставить один installer (например [bivlked/amneziawg-installer](https://github.com/bivlked/amneziawg-installer)) с `manage_amneziawg.sh add`.
+2. Либо перейти на [bivlked/amneziawg-installer](https://github.com/bivlked/amneziawg-installer) — бот уже настроен под `manage_amneziawg.sh add/remove` и чтение `.vpnuri`.
 
-В `.env` задайте `AMNEZIA_EXPECTED_PORT=47661` — `/admin_vpn_add` покажет предупреждение, если бот создаёт клиентов на другом порту.
+После установки bivlked задайте `AMNEZIA_EXPECTED_PORT` равным порту из `sudo awg show awg0` (обычно `62205`). `/admin_vpn_add` предупредит, если порт в конфиге не совпадает.
 
 ## Тесты
 

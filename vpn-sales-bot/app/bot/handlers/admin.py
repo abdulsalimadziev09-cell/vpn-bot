@@ -256,7 +256,7 @@ async def _admin_vpn_remove(message: Message, client_name: str) -> None:
         await message.answer(f"Ошибка при удалении клиента {client_name}.")
         return
 
-    await message.answer(f"✅ Клиент {client_name} удалён с VPS (--remove-client).")
+    await message.answer(f"✅ Клиент {client_name} удалён с VPS.")
 
 
 @router.message(Command("admin_approve"))

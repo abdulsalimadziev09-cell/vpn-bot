@@ -11,6 +11,7 @@ from app.formatters import format_vpn_delivery_hint
 from app.services.amnezia_export import AmneziaExportError, conf_to_vpn_uri
 from app.services.awg_conf import apply_awg_enrichment
 from app.services.split_tunnel_gift import send_split_tunnel_gift
+from app.services.vpn_provisioner import is_vpn_uri
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +35,13 @@ def _amnezia_export_kwargs() -> dict[str, str]:
 
 
 def _build_vpn_uri(config_text: str) -> str | None:
+    if is_vpn_uri(config_text):
+        return config_text.strip()
+    source = config_text
+    if not settings.vpn_skip_awg_enrichment:
+        source = apply_awg_enrichment(config_text)
     try:
-        return conf_to_vpn_uri(config_text, **_amnezia_export_kwargs())
+        return conf_to_vpn_uri(source, **_amnezia_export_kwargs())
     except AmneziaExportError:
         logger.exception("Failed to convert WireGuard conf to Amnezia vpn:// URI")
         return None
@@ -49,7 +55,6 @@ async def send_vpn_config_files(
     *,
     header: str = "",
 ) -> None:
-    config_text = apply_awg_enrichment(config_text)
     vpn_uri = _build_vpn_uri(config_text)
 
     if header:
@@ -70,11 +75,14 @@ async def send_vpn_config_files(
             parse_mode="HTML",
         )
     else:
+        fallback_conf = config_text
+        if not settings.vpn_skip_awg_enrichment and not is_vpn_uri(config_text):
+            fallback_conf = apply_awg_enrichment(config_text)
         config_file = BufferedInputFile(
-            config_text.encode("utf-8"),
+            fallback_conf.encode("utf-8"),
             filename=f"{client_name}.conf",
         )
-        qr_file = BufferedInputFile(_qr_bytes(config_text), filename=f"{client_name}.png")
+        qr_file = BufferedInputFile(_qr_bytes(fallback_conf), filename=f"{client_name}.png")
         await bot.send_document(chat_id, config_file, caption="VPN-конфиг (.conf)")
         await bot.send_photo(chat_id, qr_file, caption="QR для быстрого импорта")
 

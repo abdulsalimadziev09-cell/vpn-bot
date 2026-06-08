@@ -21,12 +21,14 @@ class Settings(BaseSettings):
     ssh_user: str = ""
     ssh_password: str = ""
     ssh_key_path: str = ""
-    ssh_add_client_script: str = "/opt/awg/amneziawg-install.sh"
-    ssh_add_client_args: str = "--add-client"
-    ssh_remove_client_args: str = "--remove-client"
-    ssh_config_dir: str = "/root"
+    ssh_add_client_script: str = "/root/awg/manage_amneziawg.sh"
+    ssh_add_client_args: str = "add"
+    ssh_remove_client_args: str = "remove"
+    ssh_config_dir: str = "/root/awg"
+    ssh_invoke_with_bash: bool = True
     ssh_awg_server_conf: str = "/etc/amnezia/amneziawg/awg0.conf"
-    ssh_merge_server_awg_params: bool = True
+    ssh_merge_server_awg_params: bool = False
+    vpn_skip_awg_enrichment: bool = True
 
     amnezia_api_url: str = ""
     amnezia_api_key: str = ""

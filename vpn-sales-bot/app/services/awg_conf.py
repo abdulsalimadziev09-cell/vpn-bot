@@ -116,6 +116,24 @@ def render_wireguard_conf(interface: dict[str, str], peer: dict[str, str]) -> st
 
 
 def diagnose_awg_conf(conf_text: str) -> dict[str, str | bool]:
+    if conf_text.strip().startswith("vpn://"):
+        return {
+            "client_ip": "",
+            "subnet": "",
+            "endpoint": "",
+            "port": "",
+            "server_pubkey": "",
+            "jc": "",
+            "jmin": "",
+            "jmax": "",
+            "has_i1": True,
+            "s1": "",
+            "s2": "",
+            "s3": "",
+            "s4": "",
+            "source": "vpnuri",
+        }
+
     enriched = apply_awg_enrichment(conf_text)
     parsed = parse_wireguard_conf(enriched)
     iface, peer = parsed.interface, parsed.peer
@@ -144,6 +162,13 @@ def diagnose_awg_conf(conf_text: str) -> dict[str, str | bool]:
 
 def format_awg_diagnostic(conf_text: str, *, expected_port: int = 0) -> str:
     info = diagnose_awg_conf(conf_text)
+    if info.get("source") == "vpnuri":
+        return (
+            "Параметры выданного конфига:\n"
+            "• Источник: .vpnuri (готовый vpn:// от AWG installer)\n"
+            "• I1 (junk-пакет): встроен в vpn://"
+        )
+
     lines = [
         "Параметры выданного конфига:",
         f"• IP: {info['client_ip'] or '—'} (подсеть {info['subnet'] or '—'})",

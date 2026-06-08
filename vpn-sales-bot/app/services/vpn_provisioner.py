@@ -73,23 +73,36 @@ class SshScriptProvisioner(VpnProvisioner):
         return await asyncssh.connect(**connect_kwargs)
 
     async def _run_add_client(self, client_name: str) -> str:
-        script = settings.ssh_add_client_script
         config_dir = settings.ssh_config_dir.rstrip("/")
-        config_path = f"{config_dir}/awg0-client-{client_name}.conf"
-        add_args = settings.ssh_add_client_args.strip()
+        command = _ssh_management_command(
+            settings.ssh_add_client_script,
+            settings.ssh_add_client_args,
+            client_name,
+        )
         async with await self._connect() as conn:
-            result = await conn.run(f"sudo {script} {add_args} {client_name}", check=True)
-            config_path = _resolve_config_path(result.stdout, config_path, client_name, config_dir)
-            read_result = await conn.run(f"sudo cat {config_path}", check=True)
-        return read_result.stdout
+            result = await conn.run(command, check=True)
+            for artifact_path in _client_artifact_paths(
+                client_name,
+                config_dir,
+                stdout=result.stdout,
+            ):
+                read_result = await conn.run(f"sudo cat {artifact_path}", check=False)
+                if read_result.exit_status == 0 and read_result.stdout.strip():
+                    return read_result.stdout.strip()
+        raise RuntimeError(f"Client config not found for {client_name} in {config_dir}")
 
     async def _run_remove_client(self, client_name: str) -> None:
-        script = settings.ssh_add_client_script
-        remove_args = settings.ssh_remove_client_args.strip()
+        command = _ssh_management_command(
+            settings.ssh_add_client_script,
+            settings.ssh_remove_client_args,
+            client_name,
+        )
         async with await self._connect() as conn:
-            await conn.run(f"sudo {script} {remove_args} {client_name}", check=False)
+            await conn.run(command, check=False)
 
     async def _enrich_client_config(self, config_text: str) -> str:
+        if is_vpn_uri(config_text) or settings.vpn_skip_awg_enrichment:
+            return config_text
         server_template: dict[str, str] = {}
         if settings.ssh_merge_server_awg_params:
             server_template = await self._fetch_server_template()
@@ -129,24 +142,57 @@ class AmneziaApiProvisioner(VpnProvisioner):
             await self.client.delete_user(external_id)
 
 
+def is_vpn_uri(config_text: str) -> bool:
+    return config_text.strip().startswith("vpn://")
+
+
+def _ssh_management_command(script: str, args: str, client_name: str) -> str:
+    args = args.strip()
+    if settings.ssh_invoke_with_bash:
+        return f"sudo bash {script} {args} {client_name}"
+    return f"sudo {script} {args} {client_name}"
+
+
+def _client_artifact_paths(
+    client_name: str,
+    config_dir: str,
+    *,
+    stdout: str | None = None,
+) -> list[str]:
+    paths: list[str] = []
+    if stdout:
+        for line in stdout.splitlines():
+            candidate = line.strip()
+            if candidate.endswith((".vpnuri", ".vpn", ".conf")):
+                paths.append(candidate)
+
+    paths.extend(
+        [
+            f"{config_dir}/{client_name}.vpnuri",
+            f"{config_dir}/{client_name}.vpn",
+            f"{config_dir}/awg0-client-{client_name}.conf",
+            f"{config_dir}/{client_name}.conf",
+        ]
+    )
+
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for path in paths:
+        if path and path not in seen:
+            seen.add(path)
+            ordered.append(path)
+    return ordered
+
+
 def _resolve_config_path(
     stdout: str | None,
     fallback: str,
     client_name: str,
     config_dir: str,
 ) -> str:
-    if stdout:
-        for line in stdout.splitlines():
-            candidate = line.strip()
-            if candidate.endswith(".conf"):
-                return candidate
-    for candidate in (
-        fallback,
-        f"{config_dir}/awg0-client-{client_name}.conf",
-        f"{config_dir}/{client_name}.conf",
-    ):
-        if candidate:
-            return candidate
+    paths = _client_artifact_paths(client_name, config_dir, stdout=stdout)
+    if paths:
+        return paths[0]
     return fallback
 
 
