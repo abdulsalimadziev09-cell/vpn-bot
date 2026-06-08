@@ -7,6 +7,7 @@ from app.services.amnezia_export import (
     decode_vpn_uri,
     parse_wireguard_conf,
     vpn_uri_to_json_text,
+    vpn_uri_to_awg_conf,
     wireguard_public_key,
 )
 
@@ -99,6 +100,20 @@ def test_conf_to_amneziawg_json_text() -> None:
     )
     profile = json.loads(json_text)
     assert profile["hostName"] == "89.169.53.7"
+
+
+def test_vpn_uri_to_awg_conf() -> None:
+    vpn_uri = conf_to_vpn_uri(
+        SAMPLE_CONF,
+        host_name="89.169.53.7",
+        dns1="1.1.1.1",
+        dns2="1.0.0.1",
+        description="Сервер 1",
+    )
+    conf = vpn_uri_to_awg_conf(vpn_uri)
+    assert conf.startswith("[Interface]")
+    assert "Endpoint = 89.169.53.7:47661" in conf
+    assert "1.1.1.1" in conf
 
 
 def test_build_profile_from_working_vpn_conf() -> None:

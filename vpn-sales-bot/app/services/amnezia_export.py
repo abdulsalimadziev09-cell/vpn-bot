@@ -235,3 +235,13 @@ def decode_vpn_uri(vpn_uri: str) -> dict:
     raw = base64.urlsafe_b64decode(payload + pad)
     decoded = zlib.decompress(raw[4:])
     return json.loads(decoded)
+
+
+def vpn_uri_to_awg_conf(vpn_uri: str) -> str:
+    profile = decode_vpn_uri(vpn_uri.strip())
+    awg_block = profile["containers"][0]["awg"]
+    last_config = json.loads(awg_block["last_config"])
+    conf = last_config["config"]
+    conf = conf.replace("$PRIMARY_DNS", profile.get("dns1", "1.1.1.1"))
+    conf = conf.replace("$SECONDARY_DNS", profile.get("dns2", "1.0.0.1"))
+    return conf

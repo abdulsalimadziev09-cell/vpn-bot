@@ -6,7 +6,7 @@ Telegram-бот для продажи VPN-подписок на базе Amnezia
 
 - Тарифы: 1 мес / 3 мес (цены в Stars настраиваются в БД)
 - Оплата Telegram Stars (встроенные инвойсы, без внешних платёжек)
-- Выдача `.json` (AWG-профиль от bivlked на сервере) для клиента AmneziaWG
+- Выдача `.conf` (нативный AWG от bivlked на сервере) для клиента AmneziaWG
 - Ручная выдача (MVP), SSH-скрипт или amnezia-api
 - Пробный период 7 дней (один раз на пользователя)
 - Бонус за реферала: +3 дня к подписке
@@ -90,7 +90,7 @@ UPDATE plans SET is_active = false WHERE code = 'year_1';
 ### ssh (bivlked AWG installer)
 
 На VPS: [bivlked/amneziawg-installer](https://github.com/bivlked/amneziawg-installer).  
-Бот вызывает `manage_amneziawg.sh add/remove`, читает `.vpnuri` (`vpn://`) и отправляет распакованный JSON в Telegram.
+Бот вызывает `manage_amneziawg.sh add/remove`, читает `{client}.conf` с VPS и отправляет в Telegram.
 
 ```env
 VPN_PROVISIONER=ssh
@@ -135,7 +135,7 @@ AMNEZIA_API_KEY=secret
 | `/admin_vpn_status` | Провижинер и SSH (админ) |
 | `/admin_vpn_add [имя]` | Тест: создать клиента на VPS и получить .vpn (админ) |
 | `/admin_vpn_remove [имя]` | Тест: удалить клиента с VPS (админ) |
-| `/admin_resend_configs` | Разослать обновлённые .json и инструкцию AmneziaWG всем с активной подпиской (админ) |
+| `/admin_resend_configs` | Разослать обновлённые .conf и инструкцию AmneziaWG всем с активной подпиской (админ) |
 
 ## VPN не подключается: два сервера на одном VPS
 

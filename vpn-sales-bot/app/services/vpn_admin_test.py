@@ -29,7 +29,7 @@ def format_admin_vpn_status() -> str:
         f"Провижинер: {settings.vpn_provisioner}\n"
         f"SSH: {settings.ssh_user}@{settings.ssh_host}:{settings.ssh_port}\n"
         f"Скрипт: bash {settings.ssh_add_client_script} {settings.ssh_add_client_args}\n"
-        f"Каталог артефактов: {settings.ssh_config_dir} (.vpnuri → .conf)\n"
+        f"Каталог артефактов: {settings.ssh_config_dir} (.conf → .vpnuri)\n"
         f"Серверный AWG conf: {settings.ssh_awg_server_conf}\n"
         f"Ожидаемый порт рабочего VPN: {expected_port}"
     )

@@ -33,5 +33,5 @@ def test_resolve_config_path_from_stdout():
 def test_resolve_config_path_fallback():
     assert (
         _resolve_config_path("", "/root/awg0-client-x.conf", "x", "/root/awg")
-        == "/root/awg/x.vpnuri"
+        == "/root/awg/x.conf"
     )

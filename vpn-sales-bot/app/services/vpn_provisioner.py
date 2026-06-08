@@ -216,10 +216,10 @@ def _client_artifact_paths(
 
     paths.extend(
         [
+            f"{config_dir}/{client_name}.conf",
+            f"{config_dir}/awg0-client-{client_name}.conf",
             f"{config_dir}/{client_name}.vpnuri",
             f"{config_dir}/{client_name}.vpn",
-            f"{config_dir}/awg0-client-{client_name}.conf",
-            f"{config_dir}/{client_name}.conf",
         ]
     )
 

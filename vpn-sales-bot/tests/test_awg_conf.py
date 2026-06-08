@@ -5,6 +5,7 @@ from app.services.awg_conf import (
     format_awg_diagnostic,
     merge_interface_params,
     render_wireguard_conf,
+    sanitize_awg_conf_for_import,
 )
 
 SAMPLE_CONF = """[Interface]
@@ -54,3 +55,22 @@ def test_format_awg_diagnostic_warns_on_port_mismatch() -> None:
     text = format_awg_diagnostic(SAMPLE_CONF, expected_port=47661)
     assert "62205" in text
     assert "47661" in text
+
+
+def test_sanitize_awg_conf_for_import_removes_empty_fields() -> None:
+    conf = """[Interface]
+PrivateKey = pk
+Address = 10.0.0.2/32
+I2 = 
+I3 = 
+# comment
+
+[Peer]
+PublicKey = spk
+Endpoint = 1.2.3.4:51820
+"""
+    cleaned = sanitize_awg_conf_for_import(conf)
+    assert "I2 =" not in cleaned
+    assert "I3 =" not in cleaned
+    assert "# comment" not in cleaned
+    assert "Endpoint = 1.2.3.4:51820" in cleaned

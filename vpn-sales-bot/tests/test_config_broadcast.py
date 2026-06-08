@@ -80,7 +80,7 @@ def test_format_config_resend_broadcast_header():
     assert "извинения" in text.lower()
     assert "работает" in text.lower()
     assert "AmneziaWG" in text
-    assert ".json" in text
+    assert ".conf" in text
     assert "apps.apple.com/app/amneziawg" in text
 
 
@@ -88,7 +88,7 @@ def test_format_amneziawg_install_guide():
     text = format_amneziawg_install_guide()
     assert "AmneziaWG" in text
     assert "Windows" in text
-    assert ".json" in text
+    assert ".conf" in text
 
 
 def test_format_config_broadcast_report():

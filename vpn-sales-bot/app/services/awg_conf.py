@@ -84,6 +84,29 @@ def merge_interface_params(conf_text: str, template: dict[str, str]) -> str:
     return render_wireguard_conf(interface, peer)
 
 
+def sanitize_awg_conf_for_import(conf_text: str) -> str:
+    """Remove comments and empty AWG fields that break AmneziaWG import."""
+    result: list[str] = []
+    for raw_line in conf_text.replace("\r", "").split("\n"):
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("[") and stripped.endswith("]"):
+            result.append(stripped)
+            continue
+        if "=" not in stripped:
+            continue
+        key, value = (part.strip() for part in stripped.split("=", 1))
+        if not value:
+            continue
+        result.append(f"{key} = {value}")
+
+    text = "\n".join(result)
+    if not text.endswith("\n"):
+        text += "\n"
+    return text
+
+
 def render_wireguard_conf(interface: dict[str, str], peer: dict[str, str]) -> str:
     lines = ["[Interface]"]
 
