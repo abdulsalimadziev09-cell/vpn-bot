@@ -1,0 +1,35 @@
+[project]
+name = "save-later-bot"
+version = "0.1.0"
+description = "Telegram bot: save links, posts, voice — tag, search, remind"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram>=3.13,<4",
+    "sqlalchemy[asyncio]>=2.0,<3",
+    "asyncpg>=0.29,<1",
+    "alembic>=1.13,<2",
+    "apscheduler>=3.10,<4",
+    "pydantic-settings>=2.5,<3",
+    "httpx>=0.27,<1",
+    "python-dotenv>=1.0,<2",
+    "pgvector>=0.3,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9",
+    "pytest-asyncio>=0.24,<1",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
