@@ -2,9 +2,11 @@ import json
 
 from app.services.amnezia_export import (
     build_amnezia_profile,
+    conf_to_amneziawg_json_text,
     conf_to_vpn_uri,
     decode_vpn_uri,
     parse_wireguard_conf,
+    vpn_uri_to_json_text,
     wireguard_public_key,
 )
 
@@ -70,6 +72,33 @@ def test_conf_to_vpn_uri_roundtrip_structure() -> None:
     assert last_config["port"] == 47661
     assert last_config["server_pub_key"] == "bPojFUDaXFty60Y/5Y45ycvI4lFn4vRvTsM/bCVZ2T4="
     assert "$PRIMARY_DNS" in last_config["config"]
+
+
+def test_vpn_uri_to_json_text() -> None:
+    vpn_uri = conf_to_vpn_uri(
+        SAMPLE_CONF,
+        host_name="89.169.53.7",
+        dns1="1.1.1.1",
+        dns2="1.0.0.1",
+        description="Сервер 1",
+    )
+    json_text = vpn_uri_to_json_text(vpn_uri)
+    assert json_text.startswith("{")
+    assert json_text.endswith("\n")
+    profile = json.loads(json_text)
+    assert profile["defaultContainer"] == "amnezia-awg2"
+
+
+def test_conf_to_amneziawg_json_text() -> None:
+    json_text = conf_to_amneziawg_json_text(
+        SAMPLE_CONF,
+        host_name="89.169.53.7",
+        dns1="1.1.1.1",
+        dns2="1.0.0.1",
+        description="Сервер 1",
+    )
+    profile = json.loads(json_text)
+    assert profile["hostName"] == "89.169.53.7"
 
 
 def test_build_profile_from_working_vpn_conf() -> None:

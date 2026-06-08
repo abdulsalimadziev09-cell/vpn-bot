@@ -27,7 +27,7 @@ def format_renewal_message(subscription: Subscription, plan: Plan) -> str:
     return (
         f"✅ Подписка продлена: {plan.title}.\n"
         f"Действует до: {expires}\n\n"
-        "Ваш VPN-конфиг не изменился — используйте прежний .vpn.\n"
+        "Ваш VPN-конфиг не изменился — используйте прежний .json.\n"
         "Повторно получить конфиг: /my → «Получить конфиг»."
     )
 
@@ -85,8 +85,8 @@ def format_download_app() -> str:
         f"📱 iOS: {AMNEZIAWG_IOS_URL}\n"
         f"🤖 Android: {AMNEZIAWG_ANDROID_URL}\n"
         f"💻 Windows: {AMNEZIAWG_WINDOWS_URL}\n\n"
-        "После установки импортируйте файл .vpn из этого бота "
-        "(внутри vpn:// JSON, который генерирует сервер AWG)."
+        "После установки импортируйте файл .json из этого бота "
+        "(JSON-профиль AWG, который генерирует сервер через bivlked)."
     )
 
 
@@ -97,7 +97,7 @@ def format_about_service() -> str:
         "стабильный протокол с обфускацией для обхода блокировок.\n\n"
         "• Один ключ — один пользователь\n"
         "• Оплата через Telegram Stars\n"
-        "• Конфиг .vpn (vpn:// JSON от AWG-сервера) приходит сразу после оплаты\n"
+        "• Конфиг .json (AWG-профиль от сервера) приходит сразу после оплаты\n"
         "• Напоминания перед окончанием подписки\n"
         f"• Пробный период: {settings.trial_days} {_days_word(settings.trial_days)} (один раз)\n"
         f"• Бонус за друга: +{settings.referral_bonus_days} {_days_word(settings.referral_bonus_days)}\n\n"
@@ -180,12 +180,17 @@ def format_vpn_delivery_hint() -> str:
         "Как подключиться:\n"
         f"1. Скачайте AmneziaWG на iOS: {AMNEZIAWG_IOS_URL}\n"
         f"2. Скачайте AmneziaWG на Android: {AMNEZIAWG_ANDROID_URL}\n"
-        "3. Откройте AmneziaWG → «Импорт конфигурации»\n"
-        "4. Выберите файл .vpn из бота (vpn:// JSON от сервера AWG)\n"
-        "5. Подключитесь к VPN\n\n"
+        f"3. Скачайте AmneziaWG на Windows: {AMNEZIAWG_WINDOWS_URL}\n"
+        "4. Откройте AmneziaWG → «Импорт конфигурации»\n"
+        "5. Выберите файл .json из бота\n"
+        "6. Подключитесь к VPN\n\n"
         "Если интернет пропал, а VPN «подключён» — выключите и включите VPN в AmneziaWG.\n"
-        "Актуальный .vpn: /my → «Получить конфиг»."
+        "Актуальный .json: /my → «Получить конфиг»."
     )
+
+
+def format_amneziawg_install_guide() -> str:
+    return f"{format_download_app()}\n\n{format_vpn_delivery_hint()}"
 
 
 def format_config_resend_broadcast_header() -> str:
@@ -193,7 +198,7 @@ def format_config_resend_broadcast_header() -> str:
         "🙏 Приносим извинения за перебои с VPN.\n\n"
         "Мы всё исправили — ниже актуальный конфиг, VPN снова работает.\n"
         "Если старый конфиг уже был в приложении — удалите его и импортируйте новый.\n\n"
-        f"{format_vpn_delivery_hint()}"
+        f"{format_amneziawg_install_guide()}"
     )
 
 

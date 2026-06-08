@@ -281,12 +281,12 @@ async def cmd_admin_resend_configs(message: Message) -> None:
 
     text = (
         "📤 Массовая рассылка обновлённых конфигов\n\n"
-        f"Получат новый .vpn: {with_config} пользователей\n"
+        f"Получат новый .json: {with_config} пользователей\n"
     )
     if without_config:
         text += f"Без конфига (пропустим): {without_config}\n"
     text += (
-        "\nКаждому уйдёт извинение и актуальный конфиг с VPS.\n"
+        "\nКаждому уйдёт извинение, инструкция по установке AmneziaWG и актуальный .json с VPS.\n"
         "Подтвердите рассылку:"
     )
     await message.answer(text, reply_markup=admin_resend_configs_confirm_keyboard())
@@ -306,12 +306,12 @@ async def admin_resend_configs_button(callback: CallbackQuery) -> None:
 
     text = (
         "📤 Массовая рассылка обновлённых конфигов\n\n"
-        f"Получат новый .vpn: {with_config} пользователей\n"
+        f"Получат новый .json: {with_config} пользователей\n"
     )
     if without_config:
         text += f"Без конфига (пропустим): {without_config}\n"
     text += (
-        "\nКаждому уйдёт извинение и актуальный конфиг с VPS.\n"
+        "\nКаждому уйдёт извинение, инструкция по установке AmneziaWG и актуальный .json с VPS.\n"
         "Подтвердите рассылку:"
     )
     await callback.message.answer(text, reply_markup=admin_resend_configs_confirm_keyboard())

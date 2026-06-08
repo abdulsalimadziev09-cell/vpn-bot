@@ -8,7 +8,11 @@ from aiogram.types import BufferedInputFile
 from app.config import settings
 from app.db.models import Plan, VpnAccount
 from app.formatters import format_vpn_delivery_hint
-from app.services.amnezia_export import AmneziaExportError, conf_to_vpn_uri
+from app.services.amnezia_export import (
+    AmneziaExportError,
+    conf_to_amneziawg_json_text,
+    vpn_uri_to_json_text,
+)
 from app.services.awg_conf import apply_awg_enrichment
 from app.services.vpn_provisioner import is_vpn_uri
 
@@ -33,16 +37,21 @@ def _amnezia_export_kwargs() -> dict[str, str]:
     }
 
 
-def _build_vpn_uri(config_text: str) -> str | None:
+def _build_amneziawg_json(config_text: str) -> str | None:
     if is_vpn_uri(config_text):
-        return config_text.strip()
+        try:
+            return vpn_uri_to_json_text(config_text.strip())
+        except Exception:
+            logger.exception("Failed to decode bivlked vpn:// URI to AmneziaWG JSON")
+            return None
+
     source = config_text
     if not settings.vpn_skip_awg_enrichment:
         source = apply_awg_enrichment(config_text)
     try:
-        return conf_to_vpn_uri(source, **_amnezia_export_kwargs())
+        return conf_to_amneziawg_json_text(source, **_amnezia_export_kwargs())
     except AmneziaExportError:
-        logger.exception("Failed to convert AWG .conf to AmneziaWG vpn:// URI")
+        logger.exception("Failed to convert AWG .conf to AmneziaWG JSON")
         return None
 
 
@@ -54,17 +63,17 @@ async def send_vpn_config_files(
     *,
     header: str = "",
 ) -> None:
-    vpn_uri = _build_vpn_uri(config_text)
+    json_text = _build_amneziawg_json(config_text)
 
     if header:
         await bot.send_message(chat_id, header)
 
-    if vpn_uri:
-        vpn_file = BufferedInputFile(
-            f"{vpn_uri}\n".encode("utf-8"),
-            filename=f"{client_name}.vpn",
+    if json_text:
+        json_file = BufferedInputFile(
+            json_text.encode("utf-8"),
+            filename=f"{client_name}.json",
         )
-        await bot.send_document(chat_id, vpn_file, caption="Конфиг AmneziaWG (.vpn, vpn:// JSON)")
+        await bot.send_document(chat_id, json_file, caption="Конфиг AmneziaWG (.json)")
     else:
         fallback_conf = config_text
         if not settings.vpn_skip_awg_enrichment and not is_vpn_uri(config_text):

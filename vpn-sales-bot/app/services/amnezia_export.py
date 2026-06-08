@@ -75,6 +75,14 @@ def encode_vpn_uri(profile: dict) -> str:
     return f"vpn://{encoded}"
 
 
+def profile_to_json_text(profile: dict, *, indent: int = 2) -> str:
+    return json.dumps(profile, ensure_ascii=False, indent=indent) + "\n"
+
+
+def vpn_uri_to_json_text(vpn_uri: str, *, indent: int = 2) -> str:
+    return profile_to_json_text(decode_vpn_uri(vpn_uri.strip()), indent=indent)
+
+
 def _client_ipv4(address: str) -> str:
     for part in address.split(","):
         part = part.strip()
@@ -199,6 +207,26 @@ def conf_to_vpn_uri(
         mtu=mtu,
     )
     return encode_vpn_uri(profile)
+
+
+def conf_to_amneziawg_json_text(
+    conf_text: str,
+    *,
+    host_name: str = "",
+    dns1: str = "1.1.1.1",
+    dns2: str = "1.0.0.1",
+    description: str = "VPN",
+    mtu: str = "1280",
+) -> str:
+    profile = build_amnezia_profile(
+        conf_text,
+        host_name=host_name,
+        dns1=dns1,
+        dns2=dns2,
+        description=description,
+        mtu=mtu,
+    )
+    return profile_to_json_text(profile)
 
 
 def decode_vpn_uri(vpn_uri: str) -> dict:
