@@ -6,35 +6,28 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     bot_token: str = "test-token"
-    database_url: str = "postgresql+asyncpg://vpnbot:vpnbot@localhost:5432/vpnbot"
+    database_url: str = "postgresql+asyncpg://starsbot:starsbot@localhost:5432/starsbot"
     admin_ids: list[int] = []
 
-    payments_enabled: bool = True
-    mini_app_url: str = ""
-    stars_buy_bot_url: str = "https://t.me/nexussstarsbot"
     http_host: str = "0.0.0.0"
-    http_port: int = 8080
+    http_port: int = 8081
+    public_base_url: str = "http://localhost:8081"
 
-    vpn_provisioner: str = "manual"
-    ssh_host: str = ""
-    ssh_port: int = 22
-    ssh_user: str = ""
-    ssh_key_path: str = ""
-    ssh_add_client_script: str = "/opt/awg/amneziawg-install.sh"
-    ssh_config_dir: str = "/root"
+    robokassa_merchant_login: str = ""
+    robokassa_password1: str = ""
+    robokassa_password2: str = ""
+    robokassa_test_mode: bool = True
 
-    amnezia_api_url: str = ""
-    amnezia_api_key: str = ""
+    stars_rub_rate: float = 1.65
+    min_stars: int = 50
+    max_stars: int = 10000
 
-    referral_bonus_days: int = 7
-    trial_days: int = 1
+    stars_delivery_mode: str = "manual"
+    telegram_api_id: int = 0
+    telegram_api_hash: str = ""
+    telethon_session_path: str = "./data/telethon.session"
 
-    expiry_check_hours: int = 6
-    expire_poll_minutes: int = 60
-    retry_fulfillment_minutes: int = 15
-
-    admin_subscription_report_enabled: bool = True
-    admin_subscription_report_hours: int = 12
+    fulfillment_retry_minutes: int = 5
 
     @field_validator("admin_ids", mode="before")
     @classmethod

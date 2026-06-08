@@ -21,7 +21,7 @@ async def session():
                 title="1 месяц",
                 days=30,
                 price_rub=299,
-                stars_price=150,
+                stars_price=100,
                 is_active=True,
             )
         )

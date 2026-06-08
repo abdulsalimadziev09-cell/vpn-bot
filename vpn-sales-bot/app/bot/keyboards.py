@@ -77,3 +77,15 @@ def back_to_menu_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text="Назад", callback_data="menu:main")]]
     )
+
+
+def stars_buy_keyboard() -> InlineKeyboardMarkup | None:
+    from app.config import settings
+
+    if not settings.stars_buy_bot_url:
+        return None
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="⭐ Купить Stars", url=settings.stars_buy_bot_url)],
+        ]
+    )

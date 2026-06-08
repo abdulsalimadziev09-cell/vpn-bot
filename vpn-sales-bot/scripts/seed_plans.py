@@ -8,10 +8,11 @@ from app.db.models import Plan
 from app.db.session import async_session_factory
 
 DEFAULT_PLANS = [
-    ("month_1", "1 месяц", 30, 299, 150),
-    ("month_3", "3 месяца", 90, 799, 400),
-    ("year_1", "1 год", 365, 2499, 1000),
+    ("month_1", "1 месяц", 30, 299, 100),
+    ("month_3", "3 месяца", 90, 799, 250),
 ]
+
+DEACTIVATED_PLAN_CODES = ("year_1",)
 
 
 async def main() -> None:
@@ -20,7 +21,11 @@ async def main() -> None:
             result = await session.execute(select(Plan).where(Plan.code == code))
             plan = result.scalar_one_or_none()
             if plan:
+                plan.title = title
+                plan.days = days
+                plan.price_rub = price_rub
                 plan.stars_price = stars_price
+                plan.is_active = True
                 continue
             session.add(
                 Plan(
@@ -32,6 +37,13 @@ async def main() -> None:
                     is_active=True,
                 )
             )
+
+        for code in DEACTIVATED_PLAN_CODES:
+            result = await session.execute(select(Plan).where(Plan.code == code))
+            plan = result.scalar_one_or_none()
+            if plan:
+                plan.is_active = False
+
         await session.commit()
 
 

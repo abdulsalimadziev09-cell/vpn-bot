@@ -20,6 +20,13 @@ def format_plan_line(plan: Plan) -> str:
     return f"{plan.title} — {plan.stars_price} ⭐ ({plan.days} дн.)"
 
 
+def format_stars_buy_hint() -> str:
+    return (
+        "Не хватает Stars на балансе?\n"
+        "Пополните в @nexussstarsbot — оплата картой или СБП, Stars придут в Telegram."
+    )
+
+
 def format_subscription_status(subscription: Subscription | None) -> str:
     if not subscription:
         return "У вас нет активной подписки."

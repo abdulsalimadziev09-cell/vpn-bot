@@ -4,7 +4,7 @@ Telegram-бот для продажи VPN-подписок на базе Amnezia
 
 ## Возможности
 
-- Тарифы: 1 мес / 3 мес / 1 год (цены в Stars настраиваются в БД)
+- Тарифы: 1 мес / 3 мес (цены в Stars настраиваются в БД)
 - Оплата Telegram Stars (встроенные инвойсы, без внешних платёжек)
 - Выдача `.conf` и QR в Telegram
 - Ручная выдача (MVP), SSH-скрипт или amnezia-api
@@ -59,14 +59,14 @@ UI в папке [`../vpn-mini-app/`](../vpn-mini-app/). После деплон
 
 | Тариф | Stars (по умолчанию) |
 |-------|----------------------|
-| 1 месяц | 150 |
-| 3 месяца | 400 |
-| 1 год | 1000 |
+| 1 месяц | 100 |
+| 3 месяца | 250 |
 
 Изменить цены:
 
 ```sql
-UPDATE plans SET stars_price = 60 WHERE code = 'month_1';
+UPDATE plans SET stars_price = 100 WHERE code = 'month_1';
+UPDATE plans SET is_active = false WHERE code = 'year_1';
 ```
 
 ## Режимы выдачи VPN

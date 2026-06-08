@@ -15,7 +15,7 @@ export const PLANS: Plan[] = [
     code: "month_1",
     title: "1 месяц",
     days: 30,
-    starsPrice: 150,
+    starsPrice: 100,
     priceRub: 299,
   },
   {
@@ -23,19 +23,10 @@ export const PLANS: Plan[] = [
     code: "month_3",
     title: "3 месяца",
     days: 90,
-    starsPrice: 400,
+    starsPrice: 250,
     priceRub: 799,
-    badge: "−11%",
+    badge: "−17%",
     popular: true,
-  },
-  {
-    id: 3,
-    code: "year_1",
-    title: "1 год",
-    days: 365,
-    starsPrice: 1000,
-    priceRub: 2499,
-    badge: "Лучшая цена",
   },
 ];
 

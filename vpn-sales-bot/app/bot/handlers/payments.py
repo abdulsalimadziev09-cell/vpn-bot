@@ -1,9 +1,11 @@
 from aiogram import F, Router
 from aiogram.types import LabeledPrice, Message, PreCheckoutQuery
 
+from app.bot.keyboards import stars_buy_keyboard
 from app.config import settings
 from app.db.models import Order, OrderStatus, Plan
 from app.db.session import async_session_factory
+from app.formatters import format_stars_buy_hint
 from app.repositories.orders import get_order_by_id
 from app.services.payment import fulfill_paid_order, handle_paid_order_extras, mark_order_paid_from_stars
 
@@ -34,6 +36,11 @@ async def send_stars_invoice(message: Message, order: Order, plan: Plan) -> None
         prices=[LabeledPrice(label=plan.title, amount=plan.stars_price)],
         provider_token="",
     )
+    if settings.stars_buy_bot_url:
+        await message.answer(
+            format_stars_buy_hint(),
+            reply_markup=stars_buy_keyboard(),
+        )
 
 
 @router.pre_checkout_query(F.invoice_payload.startswith(ORDER_PAYLOAD_PREFIX))

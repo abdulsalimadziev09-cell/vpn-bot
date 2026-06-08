@@ -7,7 +7,7 @@ from app.formatters import build_admin_subscriptions_report, subscription_days_r
 def test_build_admin_subscriptions_report():
     now = datetime.now(timezone.utc)
     user = User(telegram_id=100, username="tester")
-    plan = Plan(id=1, code="month_1", title="1 месяц", days=30, price_rub=299, stars_price=150)
+    plan = Plan(id=1, code="month_1", title="1 месяц", days=30, price_rub=299, stars_price=100)
     subscription = Subscription(
         user_id=100,
         plan_id=1,
