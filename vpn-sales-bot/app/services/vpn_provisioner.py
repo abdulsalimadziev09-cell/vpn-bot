@@ -23,13 +23,19 @@ class VpnProvisioner(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def provision_client(self, client_name: str) -> ProvisionResult:
+        raise NotImplementedError
+
+    @abstractmethod
     async def revoke(self, external_id: str | None, client_name: str) -> None:
         raise NotImplementedError
 
 
 class ManualProvisioner(VpnProvisioner):
     async def provision(self, order: Order) -> ProvisionResult:
-        client_name = client_name_for_user(order.user_id)
+        return await self.provision_client(client_name_for_user(order.user_id))
+
+    async def provision_client(self, client_name: str) -> ProvisionResult:
         return ProvisionResult(
             client_name=client_name,
             config_text="",
@@ -42,7 +48,9 @@ class ManualProvisioner(VpnProvisioner):
 
 class SshScriptProvisioner(VpnProvisioner):
     async def provision(self, order: Order) -> ProvisionResult:
-        client_name = client_name_for_user(order.user_id)
+        return await self.provision_client(client_name_for_user(order.user_id))
+
+    async def provision_client(self, client_name: str) -> ProvisionResult:
         config_text = await self._run_add_client(client_name)
         return ProvisionResult(client_name=client_name, config_text=config_text)
 
@@ -65,11 +73,10 @@ class SshScriptProvisioner(VpnProvisioner):
     async def _run_add_client(self, client_name: str) -> str:
         script = settings.ssh_add_client_script
         config_dir = settings.ssh_config_dir.rstrip("/")
+        config_path = f"{config_dir}/awg0-client-{client_name}.conf"
         async with await self._connect() as conn:
             result = await conn.run(f"sudo {script} --add-client {client_name}", check=True)
-            if result.stderr:
-                pass
-            config_path = f"{config_dir}/awg0-client-{client_name}.conf"
+            config_path = _resolve_config_path(result.stdout, config_path)
             read_result = await conn.run(f"sudo cat {config_path}", check=True)
         return read_result.stdout
 
@@ -84,7 +91,9 @@ class AmneziaApiProvisioner(VpnProvisioner):
         self.client = AmneziaApiClient()
 
     async def provision(self, order: Order) -> ProvisionResult:
-        client_name = client_name_for_user(order.user_id)
+        return await self.provision_client(client_name_for_user(order.user_id))
+
+    async def provision_client(self, client_name: str) -> ProvisionResult:
         info = await self.client.create_user(client_name)
         return ProvisionResult(
             client_name=client_name,
@@ -97,6 +106,16 @@ class AmneziaApiProvisioner(VpnProvisioner):
             await self.client.delete_user(external_id)
 
 
+def _resolve_config_path(stdout: str | None, fallback: str) -> str:
+    if not stdout:
+        return fallback
+    for line in stdout.splitlines():
+        candidate = line.strip()
+        if candidate.endswith(".conf"):
+            return candidate
+    return fallback
+
+
 def get_provisioner() -> VpnProvisioner:
     mapping: dict[str, type[VpnProvisioner]] = {
         "manual": ManualProvisioner,
@@ -105,3 +124,11 @@ def get_provisioner() -> VpnProvisioner:
     }
     provisioner_cls = mapping.get(settings.vpn_provisioner, ManualProvisioner)
     return provisioner_cls()
+
+
+async def provision_vpn_client(client_name: str) -> ProvisionResult:
+    return await get_provisioner().provision_client(client_name)
+
+
+async def revoke_vpn_client(client_name: str) -> None:
+    await get_provisioner().revoke(None, client_name)

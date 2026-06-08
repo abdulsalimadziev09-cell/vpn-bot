@@ -1,16 +1,28 @@
+import logging
+
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
+logger = logging.getLogger(__name__)
+
 from app.bot.admin_text import format_admin_help, is_admin
 from app.bot.keyboards import admin_menu_keyboard
+from app.config import settings
 from app.db.session import async_session_factory
 from app.formatters import format_order_admin
 from app.repositories.orders import get_order_by_id, list_orders_by_status
 from app.services.admin_report import send_admin_subscriptions_report
 from app.services.payment import approve_manual_order
+from app.services.vpn_admin_test import (
+    admin_test_provision,
+    admin_test_revoke,
+    format_admin_vpn_status,
+    parse_admin_test_client_name,
+)
+from app.services.vpn_delivery import send_vpn_config_files
 
 router = Router()
 
@@ -88,6 +100,136 @@ async def cmd_admin_orders(message: Message) -> None:
 
     chunks = [format_order_admin(order) for order in paid_orders[:20]]
     await message.answer("Заказы, ожидающие выдачи:\n\n" + "\n\n".join(chunks))
+
+
+@router.message(Command("admin_vpn_status"))
+async def cmd_admin_vpn_status(message: Message) -> None:
+    if not is_admin(message.from_user.id):
+        return
+
+    await message.answer(format_admin_vpn_status())
+
+
+@router.message(Command("admin_vpn_add"))
+async def cmd_admin_vpn_add(message: Message) -> None:
+    if not is_admin(message.from_user.id):
+        return
+
+    parts = (message.text or "").split(maxsplit=1)
+    client_name = parse_admin_test_client_name(
+        message.from_user.id,
+        parts[1].strip() if len(parts) > 1 else None,
+    )
+    if not client_name:
+        await message.answer(
+            "Некорректное имя клиента. Допустимо: латиница, цифры, _ и -, до 32 символов.\n"
+            "Пример: /admin_vpn_add test_bot"
+        )
+        return
+
+    await _admin_vpn_add(message, client_name)
+
+
+@router.message(Command("admin_vpn_remove"))
+async def cmd_admin_vpn_remove(message: Message) -> None:
+    if not is_admin(message.from_user.id):
+        return
+
+    parts = (message.text or "").split(maxsplit=1)
+    client_name = parse_admin_test_client_name(
+        message.from_user.id,
+        parts[1].strip() if len(parts) > 1 else None,
+    )
+    if not client_name:
+        await message.answer(
+            "Некорректное имя клиента.\n"
+            "Пример: /admin_vpn_remove test_bot"
+        )
+        return
+
+    await _admin_vpn_remove(message, client_name)
+
+
+@router.callback_query(lambda c: c.data == "admin:vpn_status")
+async def admin_vpn_status_button(callback: CallbackQuery) -> None:
+    if not is_admin(callback.from_user.id):
+        await callback.answer()
+        return
+
+    await callback.message.answer(format_admin_vpn_status())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "admin:vpn_add")
+async def admin_vpn_add_button(callback: CallbackQuery) -> None:
+    if not is_admin(callback.from_user.id):
+        await callback.answer()
+        return
+
+    client_name = parse_admin_test_client_name(callback.from_user.id, None)
+    assert client_name is not None
+    await _admin_vpn_add(callback.message, client_name)
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "admin:vpn_remove")
+async def admin_vpn_remove_button(callback: CallbackQuery) -> None:
+    if not is_admin(callback.from_user.id):
+        await callback.answer()
+        return
+
+    client_name = parse_admin_test_client_name(callback.from_user.id, None)
+    assert client_name is not None
+    await _admin_vpn_remove(callback.message, client_name)
+    await callback.answer()
+
+
+async def _admin_vpn_add(message: Message, client_name: str) -> None:
+    if settings.vpn_provisioner == "manual":
+        await message.answer(
+            "VPN_PROVISIONER=manual — автовыдача недоступна.\n"
+            "Переключите на ssh или amnezia_api для теста."
+        )
+        return
+
+    await message.answer(f"Создаю клиента {client_name} на VPS…")
+    try:
+        result = await admin_test_provision(client_name)
+    except Exception:
+        logger.exception("Admin VPN test provision failed for %s", client_name)
+        await message.answer(
+            f"Ошибка при создании клиента {client_name}.\n"
+            "Проверьте SSH, скрипт и каталог конфигов (/admin_vpn_status)."
+        )
+        return
+
+    if result.requires_manual or not result.config_text:
+        await message.answer("Провижинер вернул пустой конфиг или требует ручной выдачи.")
+        return
+
+    await send_vpn_config_files(
+        message.bot,
+        message.chat.id,
+        result.client_name,
+        result.config_text,
+        header=f"✅ Тест: клиент {result.client_name} создан на VPS.",
+    )
+
+
+async def _admin_vpn_remove(message: Message, client_name: str) -> None:
+    if settings.vpn_provisioner == "manual":
+        await message.answer("VPN_PROVISIONER=manual — удаление через SSH недоступно.")
+        return
+
+    await message.answer(f"Удаляю клиента {client_name} с VPS…")
+    try:
+        await admin_test_revoke(client_name)
+    except Exception:
+        logger.exception("Admin VPN test revoke failed for %s", client_name)
+        await message.answer(f"Ошибка при удалении клиента {client_name}.")
+        return
+
+    await message.answer(f"✅ Клиент {client_name} удалён с VPS (--remove-client).")
 
 
 @router.message(Command("admin_approve"))

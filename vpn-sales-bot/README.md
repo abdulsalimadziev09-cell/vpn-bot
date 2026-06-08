@@ -93,7 +93,7 @@ SSH_USER=deploy
 SSH_PASSWORD=your-password
 SSH_KEY_PATH=
 SSH_ADD_CLIENT_SCRIPT=/opt/awg/amneziawg-install.sh
-SSH_CONFIG_DIR=/root
+SSH_CONFIG_DIR=/etc/amnezia/amneziawg/clients
 ```
 
 Аутентификация: пароль (`SSH_PASSWORD`) и/или ключ (`SSH_KEY_PATH`). Достаточно одного способа.
@@ -118,6 +118,9 @@ AMNEZIA_API_KEY=secret
 | `/admin_subscriptions` | Сводка: у кого сколько дней осталось (админ) |
 | `/admin_orders` | Заказы, ожидающие выдачи (админ) |
 | `/admin_approve <id>` | Ручная выдача конфига (админ) |
+| `/admin_vpn_status` | Провижинер и SSH (админ) |
+| `/admin_vpn_add [имя]` | Тест: создать клиента на VPS и получить .conf (админ) |
+| `/admin_vpn_remove [имя]` | Тест: удалить клиента с VPS (админ) |
 
 ## Тесты
 

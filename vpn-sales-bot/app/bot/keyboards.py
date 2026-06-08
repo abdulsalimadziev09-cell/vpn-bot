@@ -8,6 +8,11 @@ def admin_menu_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [InlineKeyboardButton(text="Заказы без конфига", callback_data="admin:orders")],
             [InlineKeyboardButton(text="Сводка подписок", callback_data="admin:subscriptions")],
+            [
+                InlineKeyboardButton(text="🧪 Тест: выдать конфиг", callback_data="admin:vpn_add"),
+                InlineKeyboardButton(text="🧪 Тест: удалить", callback_data="admin:vpn_remove"),
+            ],
+            [InlineKeyboardButton(text="Статус VPN/SSH", callback_data="admin:vpn_status")],
             [InlineKeyboardButton(text="Назад в меню", callback_data="menu:main")],
         ]
     )

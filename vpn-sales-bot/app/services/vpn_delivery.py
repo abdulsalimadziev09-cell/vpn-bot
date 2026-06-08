@@ -19,6 +19,26 @@ def _qr_bytes(config_text: str) -> bytes:
     return buffer.getvalue()
 
 
+async def send_vpn_config_files(
+    bot: Bot,
+    chat_id: int,
+    client_name: str,
+    config_text: str,
+    *,
+    header: str = "",
+) -> None:
+    config_file = BufferedInputFile(
+        config_text.encode("utf-8"),
+        filename=f"{client_name}.conf",
+    )
+    qr_file = BufferedInputFile(_qr_bytes(config_text), filename=f"{client_name}.png")
+
+    if header:
+        await bot.send_message(chat_id, header)
+    await bot.send_document(chat_id, config_file, caption="VPN-конфиг")
+    await bot.send_photo(chat_id, qr_file, caption="QR для быстрого импорта")
+
+
 async def deliver_vpn_config(
     bot: Bot,
     telegram_id: int,
@@ -34,18 +54,13 @@ async def deliver_vpn_config(
         )
         return
 
-    config_file = BufferedInputFile(
-        account.config_text.encode("utf-8"),
-        filename=f"{account.client_name}.conf",
-    )
-    qr_file = BufferedInputFile(_qr_bytes(account.config_text), filename=f"{account.client_name}.png")
-
-    await bot.send_message(
+    await send_vpn_config_files(
+        bot,
         telegram_id,
-        f"Оплата прошла успешно. Тариф: {plan.title}.\n\n{format_vpn_delivery_hint()}",
+        account.client_name,
+        account.config_text,
+        header=f"Оплата прошла успешно. Тариф: {plan.title}.\n\n{format_vpn_delivery_hint()}",
     )
-    await bot.send_document(telegram_id, config_file, caption="Ваш VPN-конфиг")
-    await bot.send_photo(telegram_id, qr_file, caption="QR для быстрого импорта")
 
     if with_split_tunnel_gift:
         await send_split_tunnel_gift(bot, telegram_id)
