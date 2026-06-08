@@ -6,7 +6,7 @@ from app.config import settings
 from app.db.models import Order
 from app.formatters import client_name_for_user
 from app.integrations.amnezia_api import AmneziaApiClient
-from app.services.awg_conf import merge_interface_params, parse_interface_params
+from app.services.awg_conf import apply_awg_enrichment, parse_interface_params
 
 
 @dataclass
@@ -90,11 +90,10 @@ class SshScriptProvisioner(VpnProvisioner):
             await conn.run(f"sudo {script} {remove_args} {client_name}", check=False)
 
     async def _enrich_client_config(self, config_text: str) -> str:
-        template = _awg_template_from_settings()
+        server_template: dict[str, str] = {}
         if settings.ssh_merge_server_awg_params:
             server_template = await self._fetch_server_template()
-            template = {**server_template, **template}
-        return merge_interface_params(config_text, template)
+        return apply_awg_enrichment(config_text, server_template or None)
 
     async def _fetch_server_template(self) -> dict[str, str]:
         server_conf = settings.ssh_awg_server_conf.strip()
@@ -128,24 +127,6 @@ class AmneziaApiProvisioner(VpnProvisioner):
     async def revoke(self, external_id: str | None, client_name: str) -> None:
         if external_id:
             await self.client.delete_user(external_id)
-
-
-def _awg_template_from_settings() -> dict[str, str]:
-    mapping = {
-        "I1": settings.amnezia_awg_i1,
-        "Jc": settings.amnezia_awg_jc,
-        "Jmin": settings.amnezia_awg_jmin,
-        "Jmax": settings.amnezia_awg_jmax,
-        "S1": settings.amnezia_awg_s1,
-        "S2": settings.amnezia_awg_s2,
-        "S3": settings.amnezia_awg_s3,
-        "S4": settings.amnezia_awg_s4,
-        "H1": settings.amnezia_awg_h1,
-        "H2": settings.amnezia_awg_h2,
-        "H3": settings.amnezia_awg_h3,
-        "H4": settings.amnezia_awg_h4,
-    }
-    return {key: value.strip() for key, value in mapping.items() if value.strip()}
 
 
 def _resolve_config_path(

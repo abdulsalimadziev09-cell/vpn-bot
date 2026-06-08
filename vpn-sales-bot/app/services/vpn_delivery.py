@@ -9,6 +9,7 @@ from app.config import settings
 from app.db.models import Plan, VpnAccount
 from app.formatters import format_vpn_delivery_hint
 from app.services.amnezia_export import AmneziaExportError, conf_to_vpn_uri
+from app.services.awg_conf import apply_awg_enrichment
 from app.services.split_tunnel_gift import send_split_tunnel_gift
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ async def send_vpn_config_files(
     *,
     header: str = "",
 ) -> None:
+    config_text = apply_awg_enrichment(config_text)
     vpn_uri = _build_vpn_uri(config_text)
 
     if header:

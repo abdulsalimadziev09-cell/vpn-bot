@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.config import settings
 from app.services.amnezia_export import parse_wireguard_conf
 
 _AWG_INTERFACE_KEYS = (
@@ -23,6 +24,44 @@ _AWG_INTERFACE_KEYS = (
     "I5",
 )
 
+_INTERFACE_PREFIX_KEYS = ("PrivateKey", "Address", "DNS")
+_PEER_KEYS = ("PublicKey", "PresharedKey", "Endpoint", "AllowedIPs", "PersistentKeepalive")
+
+# I1 с рабочего Amnezia AWG2 (обход DPI). Переопределяется через AMNEZIA_AWG_I1 в .env
+_DEFAULT_AWG_I1 = (
+    "<r 2><b 0x858000010001000000000669636c6f756403636f6d0000010001"
+    "c00c000100010000105a00044d583737>"
+)
+
+
+def awg_template_from_settings() -> dict[str, str]:
+    mapping = {
+        "I1": settings.amnezia_awg_i1 or _DEFAULT_AWG_I1,
+        "I2": settings.amnezia_awg_i2,
+        "I3": settings.amnezia_awg_i3,
+        "I4": settings.amnezia_awg_i4,
+        "I5": settings.amnezia_awg_i5,
+        "Jc": settings.amnezia_awg_jc,
+        "Jmin": settings.amnezia_awg_jmin,
+        "Jmax": settings.amnezia_awg_jmax,
+        "S1": settings.amnezia_awg_s1,
+        "S2": settings.amnezia_awg_s2,
+        "S3": settings.amnezia_awg_s3,
+        "S4": settings.amnezia_awg_s4,
+        "H1": settings.amnezia_awg_h1,
+        "H2": settings.amnezia_awg_h2,
+        "H3": settings.amnezia_awg_h3,
+        "H4": settings.amnezia_awg_h4,
+    }
+    return {key: value.strip() for key, value in mapping.items() if value and value.strip()}
+
+
+def apply_awg_enrichment(conf_text: str, extra_template: dict[str, str] | None = None) -> str:
+    template = awg_template_from_settings()
+    if extra_template:
+        template = {**extra_template, **template}
+    return merge_interface_params(conf_text, template)
+
 
 def parse_interface_params(conf_text: str) -> dict[str, str]:
     parsed = parse_wireguard_conf(conf_text)
@@ -33,37 +72,52 @@ def merge_interface_params(conf_text: str, template: dict[str, str]) -> str:
     if not template:
         return conf_text
 
-    lines = conf_text.replace("\r", "").split("\n")
-    present = {line.split("=", 1)[0].strip() for line in lines if "=" in line and not line.strip().startswith("#")}
-    result: list[str] = []
-    inserted = False
+    parsed = parse_wireguard_conf(conf_text)
+    interface = dict(parsed.interface)
+    peer = dict(parsed.peer)
 
-    for line in lines:
-        result.append(line)
-        if not inserted and line.strip() == "[Interface]":
-            for key in _AWG_INTERFACE_KEYS:
-                value = template.get(key)
-                if not value or key in present:
-                    continue
-                result.append(f"{key} = {value}")
-            inserted = True
+    for key, value in template.items():
+        if key not in _AWG_INTERFACE_KEYS or not value:
+            continue
+        interface[key] = value
+
+    return render_wireguard_conf(interface, peer)
+
+
+def render_wireguard_conf(interface: dict[str, str], peer: dict[str, str]) -> str:
+    lines = ["[Interface]"]
+
+    for key in _INTERFACE_PREFIX_KEYS:
+        if key in interface:
+            lines.append(f"{key} = {interface[key]}")
 
     for key in _AWG_INTERFACE_KEYS:
-        value = template.get(key)
-        if not value or key in present:
-            continue
-        if not inserted:
-            continue
-        result.append(f"{key} = {value}")
+        if key in interface:
+            lines.append(f"{key} = {interface[key]}")
 
-    text = "\n".join(result)
-    if not text.endswith("\n"):
-        text += "\n"
-    return text
+    for key, value in interface.items():
+        if key in _INTERFACE_PREFIX_KEYS or key in _AWG_INTERFACE_KEYS:
+            continue
+        lines.append(f"{key} = {value}")
+
+    lines.append("")
+    lines.append("[Peer]")
+
+    for key in _PEER_KEYS:
+        if key in peer:
+            lines.append(f"{key} = {peer[key]}")
+
+    for key, value in peer.items():
+        if key in _PEER_KEYS:
+            continue
+        lines.append(f"{key} = {value}")
+
+    return "\n".join(lines) + "\n"
 
 
 def diagnose_awg_conf(conf_text: str) -> dict[str, str | bool]:
-    parsed = parse_wireguard_conf(conf_text)
+    enriched = apply_awg_enrichment(conf_text)
+    parsed = parse_wireguard_conf(enriched)
     iface, peer = parsed.interface, parsed.peer
     address = iface.get("Address", "")
     ipv4 = next((part.strip().split("/")[0] for part in address.split(",") if "." in part), "")
@@ -105,6 +159,6 @@ def format_awg_diagnostic(conf_text: str, *, expected_port: int = 0) -> str:
             "Бот, вероятно, создаёт клиентов на другом AWG-сервере."
         )
     if not info["has_i1"]:
-        lines.append("⚠️ Нет I1 — обфускация AWG2 неполная, DPI может блокировать.")
+        lines.append("⚠️ Нет I1 — задайте AMNEZIA_AWG_I1 в .env (в кавычках).")
 
     return "\n".join(lines)

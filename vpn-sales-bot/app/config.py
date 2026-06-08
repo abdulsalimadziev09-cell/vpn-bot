@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     amnezia_mtu: str = "1280"
     amnezia_expected_port: int = 0
     amnezia_awg_i1: str = ""
+    amnezia_awg_i2: str = ""
+    amnezia_awg_i3: str = ""
+    amnezia_awg_i4: str = ""
+    amnezia_awg_i5: str = ""
     amnezia_awg_jc: str = ""
     amnezia_awg_jmin: str = ""
     amnezia_awg_jmax: str = ""
