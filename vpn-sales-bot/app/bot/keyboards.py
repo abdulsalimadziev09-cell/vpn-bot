@@ -1,6 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 
 from app.db.models import Plan
+from app.formatters import format_trial_button_label
 
 
 def admin_menu_keyboard() -> InlineKeyboardMarkup:
@@ -36,7 +37,9 @@ def main_menu_keyboard(
         ]
     )
     if show_trial:
-        rows.append([InlineKeyboardButton(text="🎁 Пробный период 1 день", callback_data="menu:trial")])
+        rows.append(
+            [InlineKeyboardButton(text=format_trial_button_label(), callback_data="menu:trial")]
+        )
     if is_admin:
         rows.append([InlineKeyboardButton(text="🔧 Админ", callback_data="menu:admin")])
     rows.extend(

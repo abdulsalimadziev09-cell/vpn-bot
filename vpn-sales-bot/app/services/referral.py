@@ -5,6 +5,7 @@ from aiogram import Bot
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.formatters import _days_word
 from app.db.models import Plan, Referral, Subscription, SubscriptionStatus
 from app.repositories.plans import get_plan_by_code
 from app.repositories.referrals import count_paid_orders, get_pending_referral_for_user
@@ -57,7 +58,8 @@ async def process_referral_bonus(session: AsyncSession, bot: Bot, referred_user_
     try:
         await bot.send_message(
             referral.referrer_id,
-            f"🎉 Ваш друг оплатил подписку! Вам начислено +{settings.referral_bonus_days} дней.",
+            f"🎉 Ваш друг оплатил подписку! Вам начислено "
+            f"+{settings.referral_bonus_days} {_days_word(settings.referral_bonus_days)}.",
         )
     except Exception:
         logger.exception("Failed to notify referrer %s", referral.referrer_id)

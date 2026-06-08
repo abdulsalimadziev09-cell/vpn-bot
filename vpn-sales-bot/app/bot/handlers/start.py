@@ -5,6 +5,7 @@ from aiogram.types import CallbackQuery, Message
 from app.bot.admin_text import format_admin_help, is_admin
 from app.bot.keyboards import main_menu_keyboard
 from app.config import settings
+from app.formatters import format_welcome_trial_line
 from app.db.session import async_session_factory
 from app.repositories.referrals import attach_referrer, parse_referral_start_arg
 from app.repositories.trial import can_start_trial
@@ -13,12 +14,13 @@ from app.repositories.users import get_or_create_user
 router = Router()
 
 
-WELCOME_TEXT = (
-    "Добро пожаловать в VPN-магазин.\n\n"
-    "Быстрый и стабильный VPN на базе AmneziaWG.\n"
-    "Выберите тариф, оплатите Stars и получите персональный конфиг в этом чате.\n\n"
-    "🎁 Новым пользователям — пробный период 1 день."
-)
+def welcome_text() -> str:
+    return (
+        "Добро пожаловать в VPN-магазин.\n\n"
+        "Быстрый и стабильный VPN на базе AmneziaWG.\n"
+        "Выберите тариф, оплатите Stars и получите персональный конфиг в этом чате.\n\n"
+        f"{format_welcome_trial_line()}"
+    )
 
 
 @router.message(CommandStart())
@@ -37,7 +39,7 @@ async def cmd_start(message: Message, command: CommandObject) -> None:
         show_trial = await can_start_trial(session, message.from_user.id)
         await session.commit()
 
-    text = WELCOME_TEXT
+    text = welcome_text()
     if attached:
         text += "\n\nВы перешли по реферальной ссылке. Спасибо!"
 
@@ -62,7 +64,7 @@ async def menu_main(callback: CallbackQuery) -> None:
     user_is_admin = is_admin(callback.from_user.id)
     mini_app_url = settings.mini_app_url or None
     await callback.message.edit_text(
-        WELCOME_TEXT,
+        welcome_text(),
         reply_markup=main_menu_keyboard(
             show_trial=show_trial,
             is_admin=user_is_admin,

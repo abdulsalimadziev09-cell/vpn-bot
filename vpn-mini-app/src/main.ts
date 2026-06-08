@@ -1,5 +1,12 @@
 import "./style.css";
-import { DOWNLOAD_LINKS, FEATURES, PLANS, SETUP_STEPS } from "./data";
+import {
+  DOWNLOAD_LINKS,
+  FEATURES,
+  PLANS,
+  REFERRAL_BONUS_DAYS,
+  SETUP_STEPS,
+  TRIAL_DAYS,
+} from "./data";
 import { greetingName, initTelegram, sendAction } from "./telegram";
 
 type TabId = "plans" | "features" | "setup";
@@ -46,8 +53,8 @@ function render(): void {
       <p>Персональный VPN с выдачей конфига в Telegram. Выберите тариф, подключитесь за пару минут.</p>
       <div class="stats">
         <div class="stat"><strong>150 ⭐</strong><span>от / мес</span></div>
-        <div class="stat"><strong>1 день</strong><span>пробный</span></div>
-        <div class="stat"><strong>+7 дн.</strong><span>за друга</span></div>
+        <div class="stat"><strong>${TRIAL_DAYS} дн.</strong><span>пробный</span></div>
+        <div class="stat"><strong>+${REFERRAL_BONUS_DAYS} дн.</strong><span>за друга</span></div>
       </div>
     </section>
 
@@ -61,7 +68,7 @@ function render(): void {
       <h2 class="section-title">Выберите подписку</h2>
       <div class="plans">${PLANS.map(renderPlanCard).join("")}</div>
       <div class="actions">
-        <button class="action-btn ghost" data-action="trial">🎁 Пробный период 1 день</button>
+        <button class="action-btn ghost" data-action="trial">🎁 Пробный период ${TRIAL_DAYS} дней</button>
         <button class="action-btn" data-action="my_subscription">Моя подписка</button>
       </div>
     </section>
@@ -82,7 +89,7 @@ function render(): void {
         ).join("")}
       </div>
       <div class="actions">
-        <button class="action-btn primary" data-action="referral">Приведи друга — +7 дней</button>
+        <button class="action-btn primary" data-action="referral">Приведи друга — +${REFERRAL_BONUS_DAYS} дня</button>
       </div>
     </section>
 

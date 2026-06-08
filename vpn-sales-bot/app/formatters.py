@@ -85,8 +85,8 @@ def format_about_service() -> str:
         "• Оплата через Telegram Stars\n"
         "• Конфиг и QR приходят сразу после оплаты\n"
         "• Напоминания перед окончанием подписки\n"
-        f"• Пробный период: {settings.trial_days} день (один раз)\n"
-        f"• Бонус за друга: +{settings.referral_bonus_days} дней\n\n"
+        f"• Пробный период: {settings.trial_days} {_days_word(settings.trial_days)} (один раз)\n"
+        f"• Бонус за друга: +{settings.referral_bonus_days} {_days_word(settings.referral_bonus_days)}\n\n"
         "По вопросам — раздел «Приведи друга» или напишите администратору."
     )
 
@@ -96,7 +96,8 @@ def format_referral_info(bot_username: str, telegram_id: int, invited_count: int
     return (
         "Приведи друга\n\n"
         f"Поделитесь ссылкой. Когда друг впервые оплатит подписку, "
-        f"вы получите +{settings.referral_bonus_days} дней к своей подписке.\n\n"
+        f"вы получите +{settings.referral_bonus_days} {_days_word(settings.referral_bonus_days)} "
+        "к своей подписке.\n\n"
         f"Ваша ссылка:\n{link}\n\n"
         f"Приглашено: {invited_count}\n"
         f"Оплатили: {paid_count}"
@@ -169,6 +170,24 @@ def format_vpn_delivery_hint() -> str:
         "4. Выберите полученный .conf файл или отсканируйте QR\n"
         "5. Подключитесь к VPN"
     )
+
+
+def format_trial_period_short() -> str:
+    days = settings.trial_days
+    return f"{days} {_days_word(days)}"
+
+
+def format_referral_bonus_short() -> str:
+    days = settings.referral_bonus_days
+    return f"+{days} {_days_word(days)}"
+
+
+def format_welcome_trial_line() -> str:
+    return f"🎁 Новым пользователям — пробный период {format_trial_period_short()}."
+
+
+def format_trial_button_label() -> str:
+    return f"🎁 Пробный период {format_trial_period_short()}"
 
 
 def _days_word(days: int) -> str:

@@ -1,3 +1,6 @@
+export const TRIAL_DAYS = 7;
+export const REFERRAL_BONUS_DAYS = 3;
+
 export type Plan = {
   id: number;
   code: string;
@@ -43,8 +46,8 @@ export const FEATURES = [
   },
   {
     icon: "🎁",
-    title: "Пробный день",
-    text: "Попробуйте сервис бесплатно — один раз для новых пользователей.",
+    title: "Пробный период",
+    text: "7 дней бесплатно — один раз для новых пользователей.",
   },
   {
     icon: "🌐",
