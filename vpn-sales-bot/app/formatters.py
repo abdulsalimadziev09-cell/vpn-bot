@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from app.config import settings
 from app.db.models import Order, Plan, Subscription, VpnAccount
+from app.repositories.stats import AdminStats
 
 AMNEZIA_IOS_URL = "https://apps.apple.com/by/app/amneziavpn/id1600529900"
 AMNEZIA_ANDROID_URL = "https://play.google.com/store/apps/details?id=org.amnezia.vpn&hl=ru"
@@ -170,6 +171,21 @@ def format_vpn_delivery_hint() -> str:
         "4. Выберите полученный .conf файл или отсканируйте QR\n"
         "5. Подключитесь к VPN"
     )
+
+
+def format_admin_stats(stats: AdminStats) -> str:
+    return (
+        "📊 Статистика\n\n"
+        f"👥 Всего пользователей: {_format_int(stats.total_users)}\n"
+        f"📈 За сегодня: {_format_int(stats.users_today)}\n"
+        f"💳 Покупок: {_format_int(stats.purchases)}\n"
+        f"⭐ Продано Stars: {_format_int(stats.stars_sold)}\n"
+        f"💰 Оборот: {_format_int(stats.revenue_rub)} ₽"
+    )
+
+
+def _format_int(value: int) -> str:
+    return f"{value:,}".replace(",", " ")
 
 
 def format_trial_period_short() -> str:

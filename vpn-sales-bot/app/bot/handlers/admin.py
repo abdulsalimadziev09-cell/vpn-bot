@@ -12,7 +12,8 @@ from app.bot.admin_text import format_admin_help, is_admin
 from app.bot.keyboards import admin_menu_keyboard
 from app.config import settings
 from app.db.session import async_session_factory
-from app.formatters import format_order_admin
+from app.formatters import format_admin_stats, format_order_admin
+from app.repositories.stats import get_admin_stats
 from app.repositories.orders import get_order_by_id, list_orders_by_status
 from app.services.admin_report import send_admin_subscriptions_report
 from app.services.payment import approve_manual_order
@@ -100,6 +101,28 @@ async def cmd_admin_orders(message: Message) -> None:
 
     chunks = [format_order_admin(order) for order in paid_orders[:20]]
     await message.answer("Заказы, ожидающие выдачи:\n\n" + "\n\n".join(chunks))
+
+
+@router.message(Command("stats"))
+async def cmd_stats(message: Message) -> None:
+    if not is_admin(message.from_user.id):
+        return
+
+    async with async_session_factory() as session:
+        stats = await get_admin_stats(session)
+    await message.answer(format_admin_stats(stats))
+
+
+@router.callback_query(lambda c: c.data == "admin:stats")
+async def admin_stats_button(callback: CallbackQuery) -> None:
+    if not is_admin(callback.from_user.id):
+        await callback.answer()
+        return
+
+    async with async_session_factory() as session:
+        stats = await get_admin_stats(session)
+    await callback.message.answer(format_admin_stats(stats))
+    await callback.answer()
 
 
 @router.message(Command("admin_vpn_status"))

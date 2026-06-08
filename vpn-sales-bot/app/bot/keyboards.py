@@ -7,6 +7,7 @@ from app.formatters import format_trial_button_label
 def admin_menu_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
+            [InlineKeyboardButton(text="📊 Статистика", callback_data="admin:stats")],
             [InlineKeyboardButton(text="Заказы без конфига", callback_data="admin:orders")],
             [InlineKeyboardButton(text="Сводка подписок", callback_data="admin:subscriptions")],
             [
