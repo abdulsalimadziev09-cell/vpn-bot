@@ -129,6 +129,24 @@ AMNEZIA_API_KEY=secret
 | `/admin_vpn_add [имя]` | Тест: создать клиента на VPS и получить .vpn (админ) |
 | `/admin_vpn_remove [имя]` | Тест: удалить клиента с VPS (админ) |
 
+## VPN не подключается: два сервера на одном VPS
+
+Если вручную рабочий VPN (через Amnezia app) и конфиг из бота отличаются — на сервере, скорее всего, **два разных AWG**:
+
+| | Рабочий (Amnezia app) | Из бота (wiresock-скрипт) |
+|---|---|---|
+| Порт | `47661` | `62205` |
+| Подсеть | `10.8.1.x` | `10.66.66.x` |
+| Jc | `5` | `8` |
+| I1 (junk) | есть | нет |
+
+Конвертация `.conf` → `.vpn` **не переносит** клиента на другой сервер. Нужен **один** AWG-стек:
+
+1. Оставить рабочий Amnezia-сервер (`47661`) и выдавать конфиги через `amnezia_api` или вручную (`VPN_PROVISIONER=manual`).
+2. Либо убрать Amnezia docker и оставить один installer (например [bivlked/amneziawg-installer](https://github.com/bivlked/amneziawg-installer)) с `manage_amneziawg.sh add`.
+
+В `.env` задайте `AMNEZIA_EXPECTED_PORT=47661` — `/admin_vpn_add` покажет предупреждение, если бот создаёт клиентов на другом порту.
+
 ## Тесты
 
 ```bash

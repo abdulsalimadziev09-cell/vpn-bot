@@ -21,6 +21,7 @@ from app.services.vpn_admin_test import (
     admin_test_provision,
     admin_test_revoke,
     format_admin_vpn_status,
+    format_provision_diagnostic,
     parse_admin_test_client_name,
 )
 from app.services.vpn_delivery import send_vpn_config_files
@@ -235,7 +236,10 @@ async def _admin_vpn_add(message: Message, client_name: str) -> None:
         message.chat.id,
         result.client_name,
         result.config_text,
-        header=f"✅ Тест: клиент {result.client_name} создан на VPS.",
+        header=(
+            f"✅ Тест: клиент {result.client_name} создан на VPS.\n\n"
+            f"{format_provision_diagnostic(result.config_text)}"
+        ),
     )
 
 

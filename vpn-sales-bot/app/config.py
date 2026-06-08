@@ -22,7 +22,11 @@ class Settings(BaseSettings):
     ssh_password: str = ""
     ssh_key_path: str = ""
     ssh_add_client_script: str = "/opt/awg/amneziawg-install.sh"
+    ssh_add_client_args: str = "--add-client"
+    ssh_remove_client_args: str = "--remove-client"
     ssh_config_dir: str = "/root"
+    ssh_awg_server_conf: str = "/etc/amnezia/amneziawg/awg0.conf"
+    ssh_merge_server_awg_params: bool = True
 
     amnezia_api_url: str = ""
     amnezia_api_key: str = ""
@@ -31,6 +35,19 @@ class Settings(BaseSettings):
     amnezia_dns2: str = "1.0.0.1"
     amnezia_description: str = "VPN"
     amnezia_mtu: str = "1280"
+    amnezia_expected_port: int = 0
+    amnezia_awg_i1: str = ""
+    amnezia_awg_jc: str = ""
+    amnezia_awg_jmin: str = ""
+    amnezia_awg_jmax: str = ""
+    amnezia_awg_s1: str = ""
+    amnezia_awg_s2: str = ""
+    amnezia_awg_s3: str = ""
+    amnezia_awg_s4: str = ""
+    amnezia_awg_h1: str = ""
+    amnezia_awg_h2: str = ""
+    amnezia_awg_h3: str = ""
+    amnezia_awg_h4: str = ""
 
     referral_bonus_days: int = 3
     trial_days: int = 7

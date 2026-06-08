@@ -24,8 +24,14 @@ def test_parse_admin_test_client_name_invalid():
 def test_resolve_config_path_from_stdout():
     stdout = "/etc/amnezia/amneziawg/clients/awg0-client-test_bot.conf\n"
     fallback = "/root/awg0-client-test_bot.conf"
-    assert _resolve_config_path(stdout, fallback) == stdout.strip()
+    assert (
+        _resolve_config_path(stdout, fallback, "test_bot", "/etc/amnezia/amneziawg/clients")
+        == stdout.strip()
+    )
 
 
 def test_resolve_config_path_fallback():
-    assert _resolve_config_path("", "/root/awg0-client-x.conf") == "/root/awg0-client-x.conf"
+    assert (
+        _resolve_config_path("", "/root/awg0-client-x.conf", "x", "/root")
+        == "/root/awg0-client-x.conf"
+    )

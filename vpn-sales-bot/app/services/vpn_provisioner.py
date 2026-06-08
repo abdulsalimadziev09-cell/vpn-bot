@@ -6,6 +6,7 @@ from app.config import settings
 from app.db.models import Order
 from app.formatters import client_name_for_user
 from app.integrations.amnezia_api import AmneziaApiClient
+from app.services.awg_conf import merge_interface_params, parse_interface_params
 
 
 @dataclass
@@ -52,6 +53,7 @@ class SshScriptProvisioner(VpnProvisioner):
 
     async def provision_client(self, client_name: str) -> ProvisionResult:
         config_text = await self._run_add_client(client_name)
+        config_text = await self._enrich_client_config(config_text)
         return ProvisionResult(client_name=client_name, config_text=config_text)
 
     async def revoke(self, external_id: str | None, client_name: str) -> None:
@@ -74,16 +76,38 @@ class SshScriptProvisioner(VpnProvisioner):
         script = settings.ssh_add_client_script
         config_dir = settings.ssh_config_dir.rstrip("/")
         config_path = f"{config_dir}/awg0-client-{client_name}.conf"
+        add_args = settings.ssh_add_client_args.strip()
         async with await self._connect() as conn:
-            result = await conn.run(f"sudo {script} --add-client {client_name}", check=True)
-            config_path = _resolve_config_path(result.stdout, config_path)
+            result = await conn.run(f"sudo {script} {add_args} {client_name}", check=True)
+            config_path = _resolve_config_path(result.stdout, config_path, client_name, config_dir)
             read_result = await conn.run(f"sudo cat {config_path}", check=True)
         return read_result.stdout
 
     async def _run_remove_client(self, client_name: str) -> None:
         script = settings.ssh_add_client_script
+        remove_args = settings.ssh_remove_client_args.strip()
         async with await self._connect() as conn:
-            await conn.run(f"sudo {script} --remove-client {client_name}", check=False)
+            await conn.run(f"sudo {script} {remove_args} {client_name}", check=False)
+
+    async def _enrich_client_config(self, config_text: str) -> str:
+        template = _awg_template_from_settings()
+        if settings.ssh_merge_server_awg_params:
+            server_template = await self._fetch_server_template()
+            template = {**server_template, **template}
+        return merge_interface_params(config_text, template)
+
+    async def _fetch_server_template(self) -> dict[str, str]:
+        server_conf = settings.ssh_awg_server_conf.strip()
+        if not server_conf:
+            return {}
+        try:
+            async with await self._connect() as conn:
+                result = await conn.run(f"sudo cat {server_conf}", check=False)
+            if result.exit_status != 0 or not result.stdout:
+                return {}
+            return parse_interface_params(result.stdout)
+        except Exception:
+            return {}
 
 
 class AmneziaApiProvisioner(VpnProvisioner):
@@ -106,12 +130,41 @@ class AmneziaApiProvisioner(VpnProvisioner):
             await self.client.delete_user(external_id)
 
 
-def _resolve_config_path(stdout: str | None, fallback: str) -> str:
-    if not stdout:
-        return fallback
-    for line in stdout.splitlines():
-        candidate = line.strip()
-        if candidate.endswith(".conf"):
+def _awg_template_from_settings() -> dict[str, str]:
+    mapping = {
+        "I1": settings.amnezia_awg_i1,
+        "Jc": settings.amnezia_awg_jc,
+        "Jmin": settings.amnezia_awg_jmin,
+        "Jmax": settings.amnezia_awg_jmax,
+        "S1": settings.amnezia_awg_s1,
+        "S2": settings.amnezia_awg_s2,
+        "S3": settings.amnezia_awg_s3,
+        "S4": settings.amnezia_awg_s4,
+        "H1": settings.amnezia_awg_h1,
+        "H2": settings.amnezia_awg_h2,
+        "H3": settings.amnezia_awg_h3,
+        "H4": settings.amnezia_awg_h4,
+    }
+    return {key: value.strip() for key, value in mapping.items() if value.strip()}
+
+
+def _resolve_config_path(
+    stdout: str | None,
+    fallback: str,
+    client_name: str,
+    config_dir: str,
+) -> str:
+    if stdout:
+        for line in stdout.splitlines():
+            candidate = line.strip()
+            if candidate.endswith(".conf"):
+                return candidate
+    for candidate in (
+        fallback,
+        f"{config_dir}/awg0-client-{client_name}.conf",
+        f"{config_dir}/{client_name}.conf",
+    ):
+        if candidate:
             return candidate
     return fallback
 
