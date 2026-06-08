@@ -15,7 +15,22 @@ def admin_menu_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="🧪 Тест: удалить", callback_data="admin:vpn_remove"),
             ],
             [InlineKeyboardButton(text="Статус VPN/SSH", callback_data="admin:vpn_status")],
+            [InlineKeyboardButton(text="📤 Разослать конфиги", callback_data="admin:resend_configs")],
             [InlineKeyboardButton(text="Назад в меню", callback_data="menu:main")],
+        ]
+    )
+
+
+def admin_resend_configs_confirm_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="✅ Да, разослать всем",
+                    callback_data="admin:resend_configs:confirm",
+                )
+            ],
+            [InlineKeyboardButton(text="Отмена", callback_data="menu:admin")],
         ]
     )
 

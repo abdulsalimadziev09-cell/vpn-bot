@@ -54,6 +54,7 @@ async def test_run_add_client_reads_vpnuri_first(monkeypatch):
     monkeypatch.setattr(settings, "ssh_add_client_script", "/root/awg/manage_amneziawg.sh")
     monkeypatch.setattr(settings, "ssh_add_client_args", "add")
     monkeypatch.setattr(settings, "vpn_skip_awg_enrichment", True)
+    monkeypatch.setattr(settings, "ssh_awg_persistent_keepalive", 0)
 
     provisioner = SshScriptProvisioner()
 
@@ -78,6 +79,43 @@ async def test_run_add_client_reads_vpnuri_first(monkeypatch):
     assert config_text == "vpn://AAATEST"
     assert conn.run.await_args_list[0].args[0] == "sudo bash /root/awg/manage_amneziawg.sh add tg_1"
     assert conn.run.await_args_list[1].args[0] == "sudo cat /root/awg/tg_1.vpnuri"
+
+
+@pytest.mark.asyncio
+async def test_run_add_client_applies_keepalive_and_regen(monkeypatch):
+    monkeypatch.setattr(settings, "ssh_config_dir", "/root/awg")
+    monkeypatch.setattr(settings, "ssh_add_client_script", "/root/awg/manage_amneziawg.sh")
+    monkeypatch.setattr(settings, "ssh_add_client_args", "add")
+    monkeypatch.setattr(settings, "ssh_awg_persistent_keepalive", 15)
+
+    provisioner = SshScriptProvisioner()
+
+    conn = AsyncMock()
+    conn.run = AsyncMock(
+        side_effect=[
+            MagicMock(exit_status=0, stdout="/root/awg/tg_1.vpnuri\n"),
+            MagicMock(exit_status=0, stdout=""),
+            MagicMock(exit_status=0, stdout=""),
+            MagicMock(exit_status=0, stdout="vpn://UPDATED\n"),
+        ]
+    )
+    connect_cm = MagicMock()
+    connect_cm.__aenter__ = AsyncMock(return_value=conn)
+    connect_cm.__aexit__ = AsyncMock(return_value=None)
+
+    with patch(
+        "app.services.vpn_provisioner.asyncssh.connect",
+        new_callable=AsyncMock,
+        return_value=connect_cm,
+    ):
+        config_text = await provisioner._run_add_client("tg_1")
+
+    assert config_text == "vpn://UPDATED"
+    assert (
+        conn.run.await_args_list[1].args[0]
+        == "sudo bash /root/awg/manage_amneziawg.sh modify PersistentKeepalive 15 tg_1"
+    )
+    assert conn.run.await_args_list[2].args[0] == "sudo bash /root/awg/manage_amneziawg.sh regen tg_1"
 
 
 def test_is_vpn_uri():

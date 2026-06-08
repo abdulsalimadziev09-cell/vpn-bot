@@ -72,6 +72,11 @@ class SshScriptProvisioner(VpnProvisioner):
             connect_kwargs["client_keys"] = [settings.ssh_key_path]
         return await asyncssh.connect(**connect_kwargs)
 
+    async def refresh_client_config(self, client_name: str) -> str:
+        async with await self._connect() as conn:
+            await self._apply_keepalive_and_regen(conn, client_name)
+            return await self._read_client_config(conn, client_name)
+
     async def _run_add_client(self, client_name: str) -> str:
         config_dir = settings.ssh_config_dir.rstrip("/")
         command = _ssh_management_command(
@@ -81,14 +86,50 @@ class SshScriptProvisioner(VpnProvisioner):
         )
         async with await self._connect() as conn:
             result = await conn.run(command, check=True)
-            for artifact_path in _client_artifact_paths(
+            await self._apply_keepalive_and_regen(conn, client_name)
+            return await self._read_client_config(
+                conn,
                 client_name,
-                config_dir,
                 stdout=result.stdout,
-            ):
-                read_result = await conn.run(f"sudo cat {artifact_path}", check=False)
-                if read_result.exit_status == 0 and read_result.stdout.strip():
-                    return read_result.stdout.strip()
+            )
+
+    async def _apply_keepalive_and_regen(
+        self,
+        conn: asyncssh.SSHClientConnection,
+        client_name: str,
+    ) -> None:
+        if settings.ssh_awg_persistent_keepalive <= 0:
+            return
+        keepalive = settings.ssh_awg_persistent_keepalive
+        modify_command = _ssh_management_command(
+            settings.ssh_add_client_script,
+            f"modify PersistentKeepalive {keepalive}",
+            client_name,
+        )
+        regen_command = _ssh_management_command(
+            settings.ssh_add_client_script,
+            "regen",
+            client_name,
+        )
+        await conn.run(modify_command, check=False)
+        await conn.run(regen_command, check=False)
+
+    async def _read_client_config(
+        self,
+        conn: asyncssh.SSHClientConnection,
+        client_name: str,
+        *,
+        stdout: str | None = None,
+    ) -> str:
+        config_dir = settings.ssh_config_dir.rstrip("/")
+        for artifact_path in _client_artifact_paths(
+            client_name,
+            config_dir,
+            stdout=stdout,
+        ):
+            read_result = await conn.run(f"sudo cat {artifact_path}", check=False)
+            if read_result.exit_status == 0 and read_result.stdout.strip():
+                return read_result.stdout.strip()
         raise RuntimeError(f"Client config not found for {client_name} in {config_dir}")
 
     async def _run_remove_client(self, client_name: str) -> None:
@@ -212,3 +253,10 @@ async def provision_vpn_client(client_name: str) -> ProvisionResult:
 
 async def revoke_vpn_client(client_name: str) -> None:
     await get_provisioner().revoke(None, client_name)
+
+
+async def refresh_vpn_client_config(client_name: str) -> str | None:
+    provisioner = get_provisioner()
+    if not isinstance(provisioner, SshScriptProvisioner):
+        return None
+    return await provisioner.refresh_client_config(client_name)

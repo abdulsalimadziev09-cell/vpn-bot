@@ -58,6 +58,7 @@ tests/test_http_routes.py
 tests/test_payment_idempotency.py
 tests/test_referral.py
 tests/test_ssh_provisioner.py
+tests/test_stars_buy_hint.py
 tests/test_subscription_extend.py
 tests/test_trial.py
 tests/test_trial_referral_labels.py

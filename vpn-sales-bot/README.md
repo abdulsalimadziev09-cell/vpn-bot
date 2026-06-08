@@ -43,6 +43,7 @@ python -m app.main
 | `PAYMENTS_ENABLED` | Включить оплату Stars |
 | `MINI_APP_URL` | HTTPS-URL Telegram Mini App (кнопка «Открыть приложение») |
 | `STARS_BUY_BOT_URL` | Бот для покупки Stars (`https://t.me/StarsFreeRuBot`) |
+| `SSH_AWG_PERSISTENT_KEEPALIVE` | Keepalive для AWG-клиентов (сек, `0` = не менять; по умолчанию `15`) |
 | `VPN_PROVISIONER` | `manual` / `ssh` / `amnezia_api` |
 | `TRIAL_DAYS` | Длительность пробного периода (по умолчанию 7) |
 | `REFERRAL_BONUS_DAYS` | Бонус рефереру за первую оплату друга (по умолчанию 3) |
@@ -134,6 +135,7 @@ AMNEZIA_API_KEY=secret
 | `/admin_vpn_status` | Провижинер и SSH (админ) |
 | `/admin_vpn_add [имя]` | Тест: создать клиента на VPS и получить .vpn (админ) |
 | `/admin_vpn_remove [имя]` | Тест: удалить клиента с VPS (админ) |
+| `/admin_resend_configs` | Разослать обновлённые .vpn всем с активной подпиской (админ) |
 
 ## VPN не подключается: два сервера на одном VPS
 

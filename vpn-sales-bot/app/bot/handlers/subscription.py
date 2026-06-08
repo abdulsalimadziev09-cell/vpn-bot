@@ -1,13 +1,19 @@
+import logging
+
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
 from app.bot.keyboards import my_subscription_keyboard
+from app.config import settings
 from app.db.session import async_session_factory
 from app.formatters import format_subscription_status
 from app.repositories.subscriptions import get_active_subscription, get_latest_vpn_account
 from app.repositories.users import get_user
 from app.services.vpn_delivery import deliver_vpn_config
+from app.services.vpn_provisioner import refresh_vpn_client_config
+
+logger = logging.getLogger(__name__)
 
 router = Router()
 
@@ -50,6 +56,18 @@ async def resend_config(callback: CallbackQuery) -> None:
         if not account or not account.config_text:
             await callback.answer("Конфиг ещё не выдан. Напишите в поддержку.", show_alert=True)
             return
+
+        if settings.vpn_provisioner == "ssh" and settings.ssh_awg_persistent_keepalive > 0:
+            try:
+                fresh_config = await refresh_vpn_client_config(account.client_name)
+                if fresh_config:
+                    account.config_text = fresh_config
+                    await session.commit()
+            except Exception:
+                logger.exception(
+                    "Failed to refresh VPN config for %s from VPS",
+                    account.client_name,
+                )
 
         await deliver_vpn_config(callback.bot, callback.from_user.id, account, subscription.plan)
 

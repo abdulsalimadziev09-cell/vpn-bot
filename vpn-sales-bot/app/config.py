@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     ssh_invoke_with_bash: bool = True
     ssh_awg_server_conf: str = "/etc/amnezia/amneziawg/awg0.conf"
     ssh_merge_server_awg_params: bool = False
+    ssh_awg_persistent_keepalive: int = 15
     vpn_skip_awg_enrichment: bool = True
 
     amnezia_api_url: str = ""

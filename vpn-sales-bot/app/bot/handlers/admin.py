@@ -9,7 +9,7 @@ from aiogram.types import CallbackQuery, Message
 logger = logging.getLogger(__name__)
 
 from app.bot.admin_text import format_admin_help, is_admin
-from app.bot.keyboards import admin_menu_keyboard
+from app.bot.keyboards import admin_menu_keyboard, admin_resend_configs_confirm_keyboard
 from app.config import settings
 from app.db.session import async_session_factory
 from app.formatters import format_admin_stats, format_order_admin
@@ -23,6 +23,11 @@ from app.services.vpn_admin_test import (
     format_admin_vpn_status,
     format_provision_diagnostic,
     parse_admin_test_client_name,
+)
+from app.services.vpn_config_broadcast import (
+    broadcast_refreshed_configs,
+    count_resend_targets,
+    format_config_broadcast_report,
 )
 from app.services.vpn_delivery import send_vpn_config_files
 
@@ -257,6 +262,82 @@ async def _admin_vpn_remove(message: Message, client_name: str) -> None:
         return
 
     await message.answer(f"✅ Клиент {client_name} удалён с VPS.")
+
+
+@router.message(Command("admin_resend_configs"))
+async def cmd_admin_resend_configs(message: Message) -> None:
+    if not is_admin(message.from_user.id):
+        return
+
+    parts = (message.text or "").split()
+    if len(parts) > 1 and parts[1].lower() == "confirm":
+        await _run_config_broadcast(message)
+        return
+
+    with_config, without_config = await count_resend_targets()
+    if with_config == 0:
+        await message.answer("Нет активных подписок с выданным конфигом.")
+        return
+
+    text = (
+        "📤 Массовая рассылка обновлённых конфигов\n\n"
+        f"Получат новый .vpn: {with_config} пользователей\n"
+    )
+    if without_config:
+        text += f"Без конфига (пропустим): {without_config}\n"
+    text += (
+        "\nКаждому уйдёт извинение и актуальный конфиг с VPS.\n"
+        "Подтвердите рассылку:"
+    )
+    await message.answer(text, reply_markup=admin_resend_configs_confirm_keyboard())
+
+
+@router.callback_query(lambda c: c.data == "admin:resend_configs")
+async def admin_resend_configs_button(callback: CallbackQuery) -> None:
+    if not is_admin(callback.from_user.id):
+        await callback.answer()
+        return
+
+    with_config, without_config = await count_resend_targets()
+    if with_config == 0:
+        await callback.message.answer("Нет активных подписок с выданным конфигом.")
+        await callback.answer()
+        return
+
+    text = (
+        "📤 Массовая рассылка обновлённых конфигов\n\n"
+        f"Получат новый .vpn: {with_config} пользователей\n"
+    )
+    if without_config:
+        text += f"Без конфига (пропустим): {without_config}\n"
+    text += (
+        "\nКаждому уйдёт извинение и актуальный конфиг с VPS.\n"
+        "Подтвердите рассылку:"
+    )
+    await callback.message.answer(text, reply_markup=admin_resend_configs_confirm_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "admin:resend_configs:confirm")
+async def admin_resend_configs_confirm(callback: CallbackQuery) -> None:
+    if not is_admin(callback.from_user.id):
+        await callback.answer()
+        return
+
+    await callback.answer("Рассылка запущена…")
+    await _run_config_broadcast(callback.message)
+
+
+async def _run_config_broadcast(message: Message) -> None:
+    await message.answer("⏳ Рассылаю конфиги… Это может занять несколько минут.")
+    try:
+        result = await broadcast_refreshed_configs(message.bot)
+    except Exception:
+        logger.exception("Admin config broadcast failed")
+        await message.answer("Ошибка рассылки. Проверьте логи и SSH/VPS.")
+        return
+
+    await message.answer(format_config_broadcast_report(result))
 
 
 @router.message(Command("admin_approve"))
