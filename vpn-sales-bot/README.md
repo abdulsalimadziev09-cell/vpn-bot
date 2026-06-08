@@ -42,6 +42,7 @@ python -m app.main
 | `ADMIN_IDS` | Telegram ID админов через запятую |
 | `PAYMENTS_ENABLED` | Включить оплату Stars |
 | `MINI_APP_URL` | HTTPS-URL Telegram Mini App (кнопка «Открыть приложение») |
+| `STARS_BUY_BOT_URL` | Бот для покупки Stars (`https://t.me/StarsFreeRuBot`) |
 | `VPN_PROVISIONER` | `manual` / `ssh` / `amnezia_api` |
 | `TRIAL_DAYS` | Длительность пробного периода (по умолчанию 7) |
 | `REFERRAL_BONUS_DAYS` | Бонус рефереру за первую оплату друга (по умолчанию 3) |
@@ -56,7 +57,8 @@ UI в папке [`../vpn-mini-app/`](../vpn-mini-app/). После деплон
 
 1. В [@BotFather](https://t.me/BotFather) включите платежи для бота (Stars).
 2. Пользователь выбирает тариф → получает инвойс → оплачивает Stars.
-3. Бот автоматически активирует подписку и выдаёт конфиг.
+3. Если Stars не хватает — кнопка «Купить Stars» ведёт в [@StarsFreeRuBot](https://t.me/StarsFreeRuBot).
+4. Бот автоматически активирует подписку и выдаёт конфиг.
 
 Цены в Stars хранятся в таблице `plans` (`stars_price`):
 

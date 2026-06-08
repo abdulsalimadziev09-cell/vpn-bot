@@ -31,10 +31,20 @@ def format_renewal_message(subscription: Subscription, plan: Plan) -> str:
     )
 
 
+def _stars_buy_bot_username() -> str:
+    url = settings.stars_buy_bot_url.rstrip("/")
+    if url.startswith("https://t.me/"):
+        return "@" + url.removeprefix("https://t.me/")
+    if url.startswith("@"):
+        return url
+    return url
+
+
 def format_stars_buy_hint() -> str:
+    bot = _stars_buy_bot_username()
     return (
         "Не хватает Stars на балансе?\n"
-        "Пополните в @StarsFreeRuBot — оплата картой или СБП, Stars придут в Telegram."
+        f"Пополните в {bot} — оплата картой или СБП, Stars придут в Telegram."
     )
 
 
