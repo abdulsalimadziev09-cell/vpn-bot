@@ -53,7 +53,6 @@ def main_menu_keyboard(
                 InlineKeyboardButton(text="Приведи друга", callback_data="menu:referral"),
                 InlineKeyboardButton(text="Инструкция", callback_data="menu:help"),
             ],
-            [InlineKeyboardButton(text="🎁 Туннелирование", callback_data="menu:split_tunnel")],
         ]
     )
     return InlineKeyboardMarkup(inline_keyboard=rows)
@@ -74,7 +73,6 @@ def my_subscription_keyboard(reminders_enabled: bool = True) -> InlineKeyboardMa
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="Получить конфиг", callback_data="my:config")],
-            [InlineKeyboardButton(text="🎁 Список для туннелирования", callback_data="menu:split_tunnel")],
             [InlineKeyboardButton(text="Продлить", callback_data="menu:plans")],
             [InlineKeyboardButton(text=reminder_label, callback_data=reminder_data)],
             [InlineKeyboardButton(text="Назад", callback_data="menu:main")],

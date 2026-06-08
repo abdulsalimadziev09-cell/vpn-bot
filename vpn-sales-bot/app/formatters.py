@@ -34,7 +34,7 @@ def format_renewal_message(subscription: Subscription, plan: Plan) -> str:
 def format_stars_buy_hint() -> str:
     return (
         "Не хватает Stars на балансе?\n"
-        "Пополните в @nexussstarsbot — оплата картой или СБП, Stars придут в Telegram."
+        "Пополните в @StarsFreeRuBot — оплата картой или СБП, Stars придут в Telegram."
     )
 
 

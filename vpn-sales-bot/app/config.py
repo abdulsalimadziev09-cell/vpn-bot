@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     payments_enabled: bool = True
     mini_app_url: str = ""
-    stars_buy_bot_url: str = "https://t.me/nexussstarsbot"
+    stars_buy_bot_url: str = "https://t.me/StarsFreeRuBot"
     http_host: str = "0.0.0.0"
     http_port: int = 8080
 

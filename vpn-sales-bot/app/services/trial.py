@@ -96,7 +96,7 @@ async def activate_trial(
     await session.commit()
 
     trial_plan = _trial_plan(plan)
-    await deliver_vpn_config(bot, telegram_id, account, trial_plan, with_split_tunnel_gift=True)
+    await deliver_vpn_config(bot, telegram_id, account, trial_plan)
     return TrialResult(ok=True)
 
 

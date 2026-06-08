@@ -10,7 +10,6 @@ from app.db.models import Plan, VpnAccount
 from app.formatters import format_vpn_delivery_hint
 from app.services.amnezia_export import AmneziaExportError, conf_to_vpn_uri
 from app.services.awg_conf import apply_awg_enrichment
-from app.services.split_tunnel_gift import send_split_tunnel_gift
 from app.services.vpn_provisioner import is_vpn_uri
 
 logger = logging.getLogger(__name__)
@@ -84,8 +83,6 @@ async def deliver_vpn_config(
     telegram_id: int,
     account: VpnAccount,
     plan: Plan,
-    *,
-    with_split_tunnel_gift: bool = False,
 ) -> None:
     if not account.config_text:
         await bot.send_message(
@@ -101,6 +98,3 @@ async def deliver_vpn_config(
         account.config_text,
         header=f"Оплата прошла успешно. Тариф: {plan.title}.\n\n{format_vpn_delivery_hint()}",
     )
-
-    if with_split_tunnel_gift:
-        await send_split_tunnel_gift(bot, telegram_id)

@@ -28,9 +28,10 @@ Telegram-бот для продажи VPN-подписок на базе Amnezia
 
 - Тарифы: 1 мес / 3 мес (цены в Stars настраиваются в БД)
 - Оплата Telegram Stars (встроенные инвойсы, без внешних платёжек)
-- Выдача `.conf` и QR в Telegram
+- Выдача `.vpn` (`vpn://`), QR и ссылка для AmneziaVPN
 - Ручная выдача (MVP), SSH-скрипт или amnezia-api
-- Пробный период 1 день (один раз на пользователя)
+- Пробный период 7 дней (один раз на пользователя)
+- Бонус за реферала: +3 дня к подписке
 - Напоминания за 7, 3 и 1 день до конца подписки
 - Автоотключение просроченных клиентов
 
@@ -64,6 +65,8 @@ python -m app.main
 | `PAYMENTS_ENABLED` | Включить оплату Stars |
 | `MINI_APP_URL` | HTTPS-URL Telegram Mini App (кнопка «Открыть приложение») |
 | `VPN_PROVISIONER` | `manual` / `ssh` / `amnezia_api` |
+| `TRIAL_DAYS` | Длительность пробного периода (по умолчанию 7) |
+| `REFERRAL_BONUS_DAYS` | Бонус рефереру за первую оплату друга (по умолчанию 3) |
 
 ## Telegram Mini App
 
@@ -103,22 +106,30 @@ UPDATE plans SET is_active = false WHERE code = 'year_1';
 
 и отправьте содержимое `.conf`.
 
-### ssh
+### ssh (bivlked AWG installer)
 
-Автовыдача конфига после оплаты; при **продлении** тот же `.conf` переиспользуется (новый клиент на VPS не создаётся).  
-При **истечении** подписки scheduler вызывает `--remove-client` на VPS.
+На VPS: [bivlked/amneziawg-installer](https://github.com/bivlked/amneziawg-installer).  
+Бот вызывает `manage_amneziawg.sh add/remove`, читает `.vpnuri` и шлёт `vpn://` в Telegram.
 
 ```env
 VPN_PROVISIONER=ssh
 SSH_HOST=your-vps-ip
-SSH_USER=deploy
+SSH_USER=root
 SSH_PASSWORD=your-password
-SSH_KEY_PATH=
-SSH_ADD_CLIENT_SCRIPT=/opt/awg/amneziawg-install.sh
-SSH_CONFIG_DIR=/root
+SSH_ADD_CLIENT_SCRIPT=/root/awg/manage_amneziawg.sh
+SSH_ADD_CLIENT_ARGS=add
+SSH_REMOVE_CLIENT_ARGS=remove
+SSH_CONFIG_DIR=/root/awg
+SSH_INVOKE_WITH_BASH=true
+VPN_SKIP_AWG_ENRICHMENT=true
+SSH_MERGE_SERVER_AWG_PARAMS=false
 ```
 
-Аутентификация: пароль (`SSH_PASSWORD`) и/или ключ (`SSH_KEY_PATH`). Достаточно одного способа.
+Проверка: `/admin_vpn_add test` → `.vpn` в чат, на VPS `sudo awg show awg0`.
+
+Legacy wiresock: см. закомментированные строки в `.env.example`.
+
+Аутентификация: пароль (`SSH_PASSWORD`) и/или ключ (`SSH_KEY_PATH`).
 
 ### amnezia_api
 
@@ -135,11 +146,32 @@ AMNEZIA_API_KEY=secret
 | `/start` | Меню и тарифы |
 | `/my` | Статус подписки |
 | `/help` | FAQ и инструкция AmneziaVPN |
-| Меню «🎁 Туннелирование» | Список `amnezia_sites.json` для раздельного туннелирования (подарок после выдачи конфига) |
 | `/admin` | Все админ-команды (только для ADMIN_IDS) |
+| `/stats` | Статистика: пользователи, покупки, Stars, оборот (админ) |
 | `/admin_subscriptions` | Сводка: у кого сколько дней осталось (админ) |
 | `/admin_orders` | Заказы, ожидающие выдачи (админ) |
 | `/admin_approve <id>` | Ручная выдача конфига (админ) |
+| `/admin_vpn_status` | Провижинер и SSH (админ) |
+| `/admin_vpn_add [имя]` | Тест: создать клиента на VPS и получить .vpn (админ) |
+| `/admin_vpn_remove [имя]` | Тест: удалить клиента с VPS (админ) |
+
+## VPN не подключается: два сервера на одном VPS
+
+Если вручную рабочий VPN (через Amnezia app) и конфиг из бота отличаются — на сервере, скорее всего, **два разных AWG**:
+
+| | Рабочий (Amnezia app) | Из бота (wiresock-скрипт) |
+|---|---|---|
+| Порт | `47661` | `62205` |
+| Подсеть | `10.8.1.x` | `10.66.66.x` |
+| Jc | `5` | `8` |
+| I1 (junk) | есть | нет |
+
+Конвертация `.conf` → `.vpn` **не переносит** клиента на другой сервер. Нужен **один** AWG-стек:
+
+1. Оставить рабочий Amnezia-сервер (`47661`) и выдавать конфиги через `amnezia_api` или вручную (`VPN_PROVISIONER=manual`).
+2. Либо перейти на [bivlked/amneziawg-installer](https://github.com/bivlked/amneziawg-installer) — бот уже настроен под `manage_amneziawg.sh add/remove` и чтение `.vpnuri`.
+
+После установки bivlked задайте `AMNEZIA_EXPECTED_PORT` равным порту из `sudo awg show awg0` (обычно `62205`). `/admin_vpn_add` предупредит, если порт в конфиге не совпадает.
 
 ## Тесты
 

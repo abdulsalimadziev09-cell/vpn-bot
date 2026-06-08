@@ -8,7 +8,6 @@ from app.bot.handlers import (
     payments,
     plans,
     referral,
-    split_tunnel,
     start,
     subscription,
     support,
@@ -28,6 +27,5 @@ def setup_routers() -> Router:
     router.include_router(about.router)
     router.include_router(referral.router)
     router.include_router(support.router)
-    router.include_router(split_tunnel.router)
     router.include_router(admin.router)
     return router
