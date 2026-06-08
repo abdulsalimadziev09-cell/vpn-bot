@@ -6,6 +6,7 @@ RUN mkdir -p /app/data
 
 COPY pyproject.toml README.md ./
 COPY app ./app
+COPY scripts ./scripts
 COPY alembic ./alembic
 COPY alembic.ini ./
 

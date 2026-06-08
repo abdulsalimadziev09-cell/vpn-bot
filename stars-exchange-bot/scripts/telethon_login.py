@@ -9,12 +9,12 @@ from app.config import settings
 
 
 async def main() -> None:
-    if not settings.telegram_api_id or not settings.telegram_api_hash:
+    if not settings.telegram_api_id_int or not settings.telegram_api_hash:
         raise SystemExit("Set TELEGRAM_API_ID and TELEGRAM_API_HASH in .env")
 
     client = TelegramClient(
         settings.telethon_session_path,
-        settings.telegram_api_id,
+        settings.telegram_api_id_int,
         settings.telegram_api_hash,
     )
     await client.connect()

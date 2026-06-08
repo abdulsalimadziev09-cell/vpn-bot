@@ -26,12 +26,12 @@ def _pick_gift_option(options: list, stars_needed: int):
 
 
 async def deliver_via_telethon(order: Order) -> DeliveryResult:
-    if not settings.telegram_api_id or not settings.telegram_api_hash:
+    if not settings.telegram_api_id_int or not settings.telegram_api_hash:
         return DeliveryResult(ok=False, error="Telethon не настроен (API_ID/API_HASH)")
 
     client = TelegramClient(
         settings.telethon_session_path,
-        settings.telegram_api_id,
+        settings.telegram_api_id_int,
         settings.telegram_api_hash,
     )
 

@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     max_stars: int = 10000
 
     stars_delivery_mode: str = "manual"
-    telegram_api_id: int = 0
+    telegram_api_id: str = ""
     telegram_api_hash: str = ""
     telethon_session_path: str = "./data/telethon.session"
 
@@ -42,14 +42,11 @@ class Settings(BaseSettings):
             return [int(item.strip()) for item in value.split(",") if item.strip()]
         return list(value)
 
-    @field_validator("telegram_api_id", mode="before")
-    @classmethod
-    def parse_telegram_api_id(cls, value: str | int | None) -> int:
-        if value is None:
+    @property
+    def telegram_api_id_int(self) -> int:
+        if not self.telegram_api_id.strip():
             return 0
-        if isinstance(value, str) and not value.strip():
-            return 0
-        return int(value)
+        return int(self.telegram_api_id)
 
 
 settings = Settings()
