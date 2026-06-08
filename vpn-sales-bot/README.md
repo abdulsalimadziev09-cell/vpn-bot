@@ -83,13 +83,20 @@ UPDATE plans SET is_active = false WHERE code = 'year_1';
 
 ### ssh
 
+Автовыдача конфига после оплаты; при **продлении** тот же `.conf` переиспользуется (новый клиент на VPS не создаётся).  
+При **истечении** подписки scheduler вызывает `--remove-client` на VPS.
+
 ```env
 VPN_PROVISIONER=ssh
 SSH_HOST=your-vps-ip
 SSH_USER=deploy
-SSH_KEY_PATH=/app/keys/vps_ed25519
+SSH_PASSWORD=your-password
+SSH_KEY_PATH=
 SSH_ADD_CLIENT_SCRIPT=/opt/awg/amneziawg-install.sh
+SSH_CONFIG_DIR=/root
 ```
+
+Аутентификация: пароль (`SSH_PASSWORD`) и/или ключ (`SSH_KEY_PATH`). Достаточно одного способа.
 
 ### amnezia_api
 

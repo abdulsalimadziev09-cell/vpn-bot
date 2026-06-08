@@ -26,11 +26,12 @@ Telegram-бот для продажи VPN-подписок на базе Amnezia
 
 ## Возможности
 
-- Тарифы: 1 мес / 3 мес / 1 год (цены в Stars настраиваются в БД)
+- Тарифы: 1 мес / 3 мес (цены в Stars настраиваются в БД)
 - Оплата Telegram Stars (встроенные инвойсы, без внешних платёжек)
 - Выдача `.conf` и QR в Telegram
 - Ручная выдача (MVP), SSH-скрипт или amnezia-api
-- Напоминания за 3 и 1 день до конца подписки
+- Пробный период 1 день (один раз на пользователя)
+- Напоминания за 7, 3 и 1 день до конца подписки
 - Автоотключение просроченных клиентов
 
 ## Быстрый старт
@@ -61,7 +62,12 @@ python -m app.main
 | `BOT_TOKEN` | Токен Telegram-бота |
 | `ADMIN_IDS` | Telegram ID админов через запятую |
 | `PAYMENTS_ENABLED` | Включить оплату Stars |
+| `MINI_APP_URL` | HTTPS-URL Telegram Mini App (кнопка «Открыть приложение») |
 | `VPN_PROVISIONER` | `manual` / `ssh` / `amnezia_api` |
+
+## Telegram Mini App
+
+UI в папке [`../vpn-mini-app/`](../vpn-mini-app/). После деплона на HTTPS-домен укажите `MINI_APP_URL` в `.env`.
 
 ## Telegram Stars
 
@@ -75,14 +81,14 @@ python -m app.main
 
 | Тариф | Stars (по умолчанию) |
 |-------|----------------------|
-| 1 месяц | 50 |
-| 3 месяца | 120 |
-| 1 год | 350 |
+| 1 месяц | 100 |
+| 3 месяца | 250 |
 
 Изменить цены:
 
 ```sql
-UPDATE plans SET stars_price = 60 WHERE code = 'month_1';
+UPDATE plans SET stars_price = 100 WHERE code = 'month_1';
+UPDATE plans SET is_active = false WHERE code = 'year_1';
 ```
 
 ## Режимы выдачи VPN
@@ -99,13 +105,20 @@ UPDATE plans SET stars_price = 60 WHERE code = 'month_1';
 
 ### ssh
 
+Автовыдача конфига после оплаты; при **продлении** тот же `.conf` переиспользуется (новый клиент на VPS не создаётся).  
+При **истечении** подписки scheduler вызывает `--remove-client` на VPS.
+
 ```env
 VPN_PROVISIONER=ssh
 SSH_HOST=your-vps-ip
 SSH_USER=deploy
-SSH_KEY_PATH=/app/keys/vps_ed25519
+SSH_PASSWORD=your-password
+SSH_KEY_PATH=
 SSH_ADD_CLIENT_SCRIPT=/opt/awg/amneziawg-install.sh
+SSH_CONFIG_DIR=/root
 ```
+
+Аутентификация: пароль (`SSH_PASSWORD`) и/или ключ (`SSH_KEY_PATH`). Достаточно одного способа.
 
 ### amnezia_api
 
@@ -122,6 +135,9 @@ AMNEZIA_API_KEY=secret
 | `/start` | Меню и тарифы |
 | `/my` | Статус подписки |
 | `/help` | FAQ и инструкция AmneziaVPN |
+| Меню «🎁 Туннелирование» | Список `amnezia_sites.json` для раздельного туннелирования (подарок после выдачи конфига) |
+| `/admin` | Все админ-команды (только для ADMIN_IDS) |
+| `/admin_subscriptions` | Сводка: у кого сколько дней осталось (админ) |
 | `/admin_orders` | Заказы, ожидающие выдачи (админ) |
 | `/admin_approve <id>` | Ручная выдача конфига (админ) |
 

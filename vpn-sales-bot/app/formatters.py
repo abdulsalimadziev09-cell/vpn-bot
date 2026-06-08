@@ -20,6 +20,16 @@ def format_plan_line(plan: Plan) -> str:
     return f"{plan.title} — {plan.stars_price} ⭐ ({plan.days} дн.)"
 
 
+def format_renewal_message(subscription: Subscription, plan: Plan) -> str:
+    expires = subscription.expires_at.astimezone(timezone.utc).strftime("%d.%m.%Y %H:%M UTC")
+    return (
+        f"✅ Подписка продлена: {plan.title}.\n"
+        f"Действует до: {expires}\n\n"
+        "Ваш VPN-конфиг не изменился — используйте прежний .conf.\n"
+        "Повторно получить конфиг: /my → «Получить конфиг»."
+    )
+
+
 def format_stars_buy_hint() -> str:
     return (
         "Не хватает Stars на балансе?\n"

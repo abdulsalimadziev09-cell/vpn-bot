@@ -50,13 +50,17 @@ class SshScriptProvisioner(VpnProvisioner):
         await self._run_remove_client(client_name)
 
     async def _connect(self) -> asyncssh.SSHClientConnection:
-        return await asyncssh.connect(
-            settings.ssh_host,
-            port=settings.ssh_port,
-            username=settings.ssh_user,
-            client_keys=[settings.ssh_key_path] if settings.ssh_key_path else None,
-            known_hosts=None,
-        )
+        connect_kwargs: dict = {
+            "host": settings.ssh_host,
+            "port": settings.ssh_port,
+            "username": settings.ssh_user,
+            "known_hosts": None,
+        }
+        if settings.ssh_password:
+            connect_kwargs["password"] = settings.ssh_password
+        if settings.ssh_key_path:
+            connect_kwargs["client_keys"] = [settings.ssh_key_path]
+        return await asyncssh.connect(**connect_kwargs)
 
     async def _run_add_client(self, client_name: str) -> str:
         script = settings.ssh_add_client_script

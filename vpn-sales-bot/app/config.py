@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     ssh_host: str = ""
     ssh_port: int = 22
     ssh_user: str = ""
+    ssh_password: str = ""
     ssh_key_path: str = ""
     ssh_add_client_script: str = "/opt/awg/amneziawg-install.sh"
     ssh_config_dir: str = "/root"

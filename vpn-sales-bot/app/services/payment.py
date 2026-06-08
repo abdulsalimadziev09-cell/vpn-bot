@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from aiogram import Bot
@@ -6,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db.models import Order, OrderStatus, Plan
+from app.formatters import format_renewal_message
 from app.repositories.orders import create_order, get_order_by_id
 from app.repositories.users import get_or_create_user
 from app.services.subscription import activate_or_extend_subscription, mark_order_fulfilled, save_vpn_account
@@ -13,6 +15,12 @@ from app.services.vpn_delivery import deliver_vpn_config
 from app.services.vpn_provisioner import get_provisioner
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class FulfillResult:
+    ok: bool
+    reused_config: bool = False
 
 
 async def create_pending_order(
@@ -59,9 +67,25 @@ async def handle_paid_order_extras(session: AsyncSession, bot: Bot, order: Order
     await session.commit()
 
 
-async def fulfill_paid_order(session: AsyncSession, bot: Bot, order: Order) -> bool:
+async def fulfill_paid_order(session: AsyncSession, bot: Bot, order: Order) -> FulfillResult:
     if order.status != OrderStatus.PAID:
-        return False
+        return FulfillResult(ok=False)
+
+    from app.repositories.subscriptions import get_active_subscription, get_vpn_account_for_subscription
+
+    subscription = await get_active_subscription(session, order.user_id)
+    if not subscription:
+        subscription = await activate_or_extend_subscription(session, order.user_id, order.plan)
+
+    existing = await get_vpn_account_for_subscription(session, subscription.id)
+    if existing and existing.config_text:
+        await mark_order_fulfilled(session, order)
+        await session.commit()
+        await bot.send_message(
+            order.user_id,
+            format_renewal_message(subscription, order.plan),
+        )
+        return FulfillResult(ok=True, reused_config=True)
 
     order.provision_attempts += 1
     provisioner = get_provisioner()
@@ -70,14 +94,12 @@ async def fulfill_paid_order(session: AsyncSession, bot: Bot, order: Order) -> b
     except Exception:
         logger.exception("Provision failed for order %s", order.id)
         await session.commit()
-        return False
+        return FulfillResult(ok=False)
 
     if result.requires_manual:
         await notify_admins_manual_order(bot, order)
         await session.commit()
-        return False
-
-    from app.repositories.subscriptions import get_active_subscription
+        return FulfillResult(ok=False)
 
     subscription = await get_active_subscription(session, order.user_id)
     if not subscription:
@@ -94,7 +116,7 @@ async def fulfill_paid_order(session: AsyncSession, bot: Bot, order: Order) -> b
     await mark_order_fulfilled(session, order)
     await session.commit()
     await deliver_vpn_config(bot, order.user_id, account, order.plan, with_split_tunnel_gift=True)
-    return True
+    return FulfillResult(ok=True)
 
 
 async def approve_manual_order(
@@ -103,11 +125,22 @@ async def approve_manual_order(
     order: Order,
     config_text: str,
 ) -> None:
-    from app.repositories.subscriptions import get_active_subscription
+    from app.repositories.subscriptions import get_active_subscription, get_vpn_account_for_subscription
 
     subscription = await get_active_subscription(session, order.user_id)
     if not subscription:
         subscription = await activate_or_extend_subscription(session, order.user_id, order.plan)
+
+    existing = await get_vpn_account_for_subscription(session, subscription.id)
+    if existing and existing.config_text:
+        await mark_order_fulfilled(session, order)
+        await session.commit()
+        await bot.send_message(
+            order.user_id,
+            format_renewal_message(subscription, order.plan),
+        )
+        return
+
     from app.formatters import client_name_for_user
 
     account = await save_vpn_account(

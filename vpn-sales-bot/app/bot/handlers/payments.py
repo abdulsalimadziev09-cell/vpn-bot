@@ -83,8 +83,10 @@ async def successful_payment(message: Message) -> None:
             return
 
         await handle_paid_order_extras(session, message.bot, order)
-        fulfilled = await fulfill_paid_order(session, message.bot, order)
-        if fulfilled:
+        result = await fulfill_paid_order(session, message.bot, order)
+        if result.ok and result.reused_config:
+            pass
+        elif result.ok:
             await message.answer("Спасибо! VPN-конфиг отправлен выше.")
         elif settings.vpn_provisioner == "manual":
             await message.answer(
