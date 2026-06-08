@@ -6,7 +6,7 @@ Telegram-бот для продажи VPN-подписок на базе Amnezia
 
 - Тарифы: 1 мес / 3 мес (цены в Stars настраиваются в БД)
 - Оплата Telegram Stars (встроенные инвойсы, без внешних платёжек)
-- Выдача `.conf` и QR в Telegram
+- Выдача `.vpn` (`vpn://`), QR и ссылка для AmneziaVPN
 - Ручная выдача (MVP), SSH-скрипт или amnezia-api
 - Пробный период 7 дней (один раз на пользователя)
 - Бонус за реферала: +3 дня к подписке
@@ -86,7 +86,7 @@ UPDATE plans SET is_active = false WHERE code = 'year_1';
 
 ### ssh
 
-Автовыдача конфига после оплаты; при **продлении** тот же `.conf` переиспользуется (новый клиент на VPS не создаётся).  
+Автовыдача `.vpn` (`vpn://`) после оплаты; при **продлении** тот же конфиг переиспользуется (новый клиент на VPS не создаётся).  
 При **истечении** подписки scheduler вызывает `--remove-client` на VPS.
 
 ```env
@@ -97,6 +97,9 @@ SSH_PASSWORD=your-password
 SSH_KEY_PATH=
 SSH_ADD_CLIENT_SCRIPT=/opt/awg/amneziawg-install.sh
 SSH_CONFIG_DIR=/etc/amnezia/amneziawg/clients
+AMNEZIA_HOST=your-vps-ip
+AMNEZIA_DNS1=1.1.1.1
+AMNEZIA_DNS2=1.0.0.1
 ```
 
 Аутентификация: пароль (`SSH_PASSWORD`) и/или ключ (`SSH_KEY_PATH`). Достаточно одного способа.
@@ -123,7 +126,7 @@ AMNEZIA_API_KEY=secret
 | `/admin_orders` | Заказы, ожидающие выдачи (админ) |
 | `/admin_approve <id>` | Ручная выдача конфига (админ) |
 | `/admin_vpn_status` | Провижинер и SSH (админ) |
-| `/admin_vpn_add [имя]` | Тест: создать клиента на VPS и получить .conf (админ) |
+| `/admin_vpn_add [имя]` | Тест: создать клиента на VPS и получить .vpn (админ) |
 | `/admin_vpn_remove [имя]` | Тест: удалить клиента с VPS (админ) |
 
 ## Тесты

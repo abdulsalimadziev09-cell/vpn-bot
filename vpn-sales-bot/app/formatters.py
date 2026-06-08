@@ -26,7 +26,7 @@ def format_renewal_message(subscription: Subscription, plan: Plan) -> str:
     return (
         f"✅ Подписка продлена: {plan.title}.\n"
         f"Действует до: {expires}\n\n"
-        "Ваш VPN-конфиг не изменился — используйте прежний .conf.\n"
+        "Ваш VPN-конфиг не изменился — используйте прежний .vpn.\n"
         "Повторно получить конфиг: /my → «Получить конфиг»."
     )
 
@@ -73,7 +73,7 @@ def format_download_app() -> str:
         "Скачайте AmneziaVPN:\n\n"
         f"📱 iOS: {AMNEZIA_IOS_URL}\n"
         f"🤖 Android: {AMNEZIA_ANDROID_URL}\n\n"
-        "После установки импортируйте .conf или отсканируйте QR из этого бота."
+        "После установки импортируйте .vpn или отсканируйте QR из этого бота."
     )
 
 
@@ -168,7 +168,7 @@ def format_vpn_delivery_hint() -> str:
         f"1. Скачайте AmneziaVPN на iOS: {AMNEZIA_IOS_URL}\n"
         f"2. Скачайте AmneziaVPN на Android: {AMNEZIA_ANDROID_URL}\n"
         "3. Откройте приложение → «Импорт конфигурации»\n"
-        "4. Выберите полученный .conf файл или отсканируйте QR\n"
+        "4. Выберите файл .vpn, вставьте vpn:// из сообщения или отсканируйте QR\n"
         "5. Подключитесь к VPN"
     )
 

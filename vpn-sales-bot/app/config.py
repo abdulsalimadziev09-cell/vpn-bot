@@ -26,6 +26,11 @@ class Settings(BaseSettings):
 
     amnezia_api_url: str = ""
     amnezia_api_key: str = ""
+    amnezia_host: str = ""
+    amnezia_dns1: str = "1.1.1.1"
+    amnezia_dns2: str = "1.0.0.1"
+    amnezia_description: str = "VPN"
+    amnezia_mtu: str = "1280"
 
     referral_bonus_days: int = 3
     trial_days: int = 7
