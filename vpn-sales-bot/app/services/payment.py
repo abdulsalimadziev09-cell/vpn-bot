@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db.models import Order, OrderStatus, Plan
-from app.formatters import format_renewal_message
+from app.formatters import format_admin_manual_provision_hint, format_renewal_message
 from app.repositories.orders import create_order, get_order_by_id
 from app.repositories.users import get_or_create_user
 from app.services.subscription import activate_or_extend_subscription, mark_order_fulfilled, save_vpn_account
@@ -162,8 +162,8 @@ async def notify_admins_manual_order(bot: Bot, order: Order) -> None:
     text = (
         f"{kind}: требуется ручная выдача конфига.\n\n"
         f"{format_order_admin(order)}\n\n"
-        f"Команда: /admin_approve {order.id}\n"
-        "После создания клиента на VPS отправьте .conf ответом на эту команду."
+        f"Команда: /admin_approve {order.id}\n\n"
+        f"{format_admin_manual_provision_hint()}"
     )
     for admin_id in settings.admin_ids:
         try:

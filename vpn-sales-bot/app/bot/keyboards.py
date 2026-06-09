@@ -10,6 +10,7 @@ def admin_menu_keyboard() -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text="📊 Статистика", callback_data="admin:stats")],
             [InlineKeyboardButton(text="Заказы без конфига", callback_data="admin:orders")],
             [InlineKeyboardButton(text="Сводка подписок", callback_data="admin:subscriptions")],
+            [InlineKeyboardButton(text="🔑 Выдать конфиг пользователю", callback_data="admin:give_config")],
             [
                 InlineKeyboardButton(text="🧪 Тест: выдать конфиг", callback_data="admin:vpn_add"),
                 InlineKeyboardButton(text="🧪 Тест: удалить", callback_data="admin:vpn_remove"),
@@ -61,7 +62,7 @@ def main_menu_keyboard(
     rows.extend(
         [
             [
-                InlineKeyboardButton(text="Скачать AmneziaWG", callback_data="menu:download"),
+                InlineKeyboardButton(text="Скачать AmneziaVPN", callback_data="menu:download"),
                 InlineKeyboardButton(text="О сервисе", callback_data="menu:about"),
             ],
             [

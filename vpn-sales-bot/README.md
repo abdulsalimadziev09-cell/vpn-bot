@@ -6,12 +6,12 @@ Telegram-бот для продажи VPN-подписок на базе Amnezia
 
 - Тарифы: 1 мес / 3 мес (цены в Stars настраиваются в БД)
 - Оплата Telegram Stars (встроенные инвойсы, без внешних платёжек)
-- Выдача `.conf` (нативный AWG от bivlked на сервере) для клиента AmneziaWG
-- Ручная выдача (MVP), SSH-скрипт или amnezia-api
+- Выдача `.vpn` с ключом `vpn://` для приложения **AmneziaVPN**
+- Ручная выдача (рекомендуется), SSH-скрипт или amnezia-api
 - Пробный период 7 дней (один раз на пользователя)
 - Бонус за реферала: +3 дня к подписке
 - Напоминания за 7, 3 и 1 день до конца подписки
-- Автоотключение просроченных клиентов
+- Автоотключение просроченных клиентов (при ssh/amnezia_api)
 
 ## Быстрый старт
 
@@ -43,14 +43,13 @@ python -m app.main
 | `PAYMENTS_ENABLED` | Включить оплату Stars |
 | `MINI_APP_URL` | HTTPS-URL Telegram Mini App (кнопка «Открыть приложение») |
 | `STARS_BUY_BOT_URL` | Бот для покупки Stars (`https://t.me/StarsFreeRuBot`) |
-| `SSH_AWG_PERSISTENT_KEEPALIVE` | Keepalive для AWG-клиентов (сек, `0` = не менять; по умолчанию `15`) |
 | `VPN_PROVISIONER` | `manual` / `ssh` / `amnezia_api` |
 | `TRIAL_DAYS` | Длительность пробного периода (по умолчанию 7) |
 | `REFERRAL_BONUS_DAYS` | Бонус рефереру за первую оплату друга (по умолчанию 3) |
 
 ## Telegram Mini App
 
-UI в папке [`../vpn-mini-app/`](../vpn-mini-app/). После деплона на HTTPS-домен укажите `MINI_APP_URL` в `.env`.
+UI в папке [`../vpn-mini-app/`](../vpn-mini-app/). После деплоя на HTTPS-домен укажите `MINI_APP_URL` в `.env`.
 
 ## Telegram Stars
 
@@ -59,7 +58,7 @@ UI в папке [`../vpn-mini-app/`](../vpn-mini-app/). После деплон
 1. В [@BotFather](https://t.me/BotFather) включите платежи для бота (Stars).
 2. Пользователь выбирает тариф → получает инвойс → оплачивает Stars.
 3. Если Stars не хватает — кнопка «Купить Stars» ведёт в [@StarsFreeRuBot](https://t.me/StarsFreeRuBot).
-4. Бот автоматически активирует подписку и выдаёт конфиг.
+4. Бот активирует подписку; конфиг выдаёт администратор.
 
 Цены в Stars хранятся в таблице `plans` (`stars_price`):
 
@@ -77,20 +76,37 @@ UPDATE plans SET is_active = false WHERE code = 'year_1';
 
 ## Режимы выдачи VPN
 
-### manual (по умолчанию)
+### manual (рекомендуется)
 
-После оплаты админ получает уведомление. На VPS создайте клиента вручную, затем:
+Конфиги создаются вручную в **AmneziaVPN** на VPS (Docker Amnezia).
 
+**Процесс для админа после оплаты:**
+
+1. Бот пришлёт уведомление с номером заказа.
+2. В AmneziaVPN на сервере: Подключения → ваш сервер → **Поделиться** → **Для приложения AmneziaVPN**.
+3. Скопируйте ключ `vpn://...`.
+4. В боте: `/admin_approve <order_id>` → вставьте ключ или отправьте файл `.vpn`.
+
+Пользователь получит:
+- файл `.vpn` с ключом `vpn://`;
+- QR-код для импорта;
+- текст ключа для вставки в AmneziaVPN.
+
+**Существующим подписчикам (замена ключа):**
+
+1. `/admin_subscriptions` — найти `telegram_id` пользователя.
+2. В AmneziaVPN создать нового клиента → Поделиться → `vpn://`.
+3. `/admin_give_config <telegram_id>` → вставить ключ.
+4. Пользователь получит новый `.vpn`; старый ключ в БД заменится (новая запись).
+
+```env
+VPN_PROVISIONER=manual
 ```
-/admin_approve <order_id>
-```
-
-и отправьте содержимое `.conf`.
 
 ### ssh (bivlked AWG installer)
 
 На VPS: [bivlked/amneziawg-installer](https://github.com/bivlked/amneziawg-installer).  
-Бот вызывает `manage_amneziawg.sh add/remove`, читает `{client}.conf` с VPS и отправляет в Telegram.
+Бот вызывает `manage_amneziawg.sh add/remove`, читает конфиг и конвертирует в `vpn://` для AmneziaVPN.
 
 ```env
 VPN_PROVISIONER=ssh
@@ -98,19 +114,9 @@ SSH_HOST=your-vps-ip
 SSH_USER=root
 SSH_PASSWORD=your-password
 SSH_ADD_CLIENT_SCRIPT=/root/awg/manage_amneziawg.sh
-SSH_ADD_CLIENT_ARGS=add
-SSH_REMOVE_CLIENT_ARGS=remove
 SSH_CONFIG_DIR=/root/awg
-SSH_INVOKE_WITH_BASH=true
 VPN_SKIP_AWG_ENRICHMENT=true
-SSH_MERGE_SERVER_AWG_PARAMS=false
 ```
-
-Проверка: `/admin_vpn_add test` → `.vpn` в чат, на VPS `sudo awg show awg0`.
-
-Legacy wiresock: см. закомментированные строки в `.env.example`.
-
-Аутентификация: пароль (`SSH_PASSWORD`) и/или ключ (`SSH_KEY_PATH`).
 
 ### amnezia_api
 
@@ -126,34 +132,17 @@ AMNEZIA_API_KEY=secret
 |---------|----------|
 | `/start` | Меню и тарифы |
 | `/my` | Статус подписки |
-| `/help` | FAQ и инструкция AmneziaWG |
+| `/help` | FAQ и инструкция AmneziaVPN |
 | `/admin` | Все админ-команды (только для ADMIN_IDS) |
 | `/stats` | Статистика: пользователи, покупки, Stars, оборот (админ) |
 | `/admin_subscriptions` | Сводка: у кого сколько дней осталось (админ) |
 | `/admin_orders` | Заказы, ожидающие выдачи (админ) |
-| `/admin_approve <id>` | Ручная выдача конфига (админ) |
+| `/admin_approve <id>` | Ручная выдача конфига по заказу (админ) |
+| `/admin_give_config <telegram_id>` | Выдать новый уникальный конфиг существующему подписчику (админ) |
 | `/admin_vpn_status` | Провижинер и SSH (админ) |
-| `/admin_vpn_add [имя]` | Тест: создать клиента на VPS и получить .vpn (админ) |
-| `/admin_vpn_remove [имя]` | Тест: удалить клиента с VPS (админ) |
-| `/admin_resend_configs` | Разослать обновлённые .conf и инструкцию AmneziaWG всем с активной подпиской (админ) |
-
-## VPN не подключается: два сервера на одном VPS
-
-Если вручную рабочий VPN (через Amnezia app) и конфиг из бота отличаются — на сервере, скорее всего, **два разных AWG**:
-
-| | Рабочий (Amnezia app) | Из бота (wiresock-скрипт) |
-|---|---|---|
-| Порт | `47661` | `62205` |
-| Подсеть | `10.8.1.x` | `10.66.66.x` |
-| Jc | `5` | `8` |
-| I1 (junk) | есть | нет |
-
-Конвертация `.conf` → `.vpn` **не переносит** клиента на другой сервер. Нужен **один** AWG-стек:
-
-1. Оставить рабочий Amnezia-сервер (`47661`) и выдавать конфиги через `amnezia_api` или вручную (`VPN_PROVISIONER=manual`).
-2. Либо перейти на [bivlked/amneziawg-installer](https://github.com/bivlked/amneziawg-installer) — бот уже настроен под `manage_amneziawg.sh add/remove` и чтение `.vpnuri`.
-
-После установки bivlked задайте `AMNEZIA_EXPECTED_PORT` равным порту из `sudo awg show awg0` (обычно `62205`). `/admin_vpn_add` предупредит, если порт в конфиге не совпадает.
+| `/admin_vpn_add [имя]` | Тест: создать клиента на VPS (админ, только ssh) |
+| `/admin_vpn_remove [имя]` | Тест: удалить клиента с VPS (админ, только ssh) |
+| `/admin_resend_configs` | Разослать сохранённые .vpn всем с активной подпиской (админ) |
 
 ## Тесты
 

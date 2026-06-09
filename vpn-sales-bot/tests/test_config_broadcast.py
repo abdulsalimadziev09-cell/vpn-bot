@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.db.models import Base, Plan, Subscription, SubscriptionStatus, User, VpnAccount
-from app.formatters import format_amneziawg_install_guide, format_config_resend_broadcast_header
+from app.formatters import format_amnezia_install_guide, format_config_resend_broadcast_header
 from app.services.vpn_config_broadcast import (
     broadcast_refreshed_configs,
     count_resend_targets,
@@ -79,16 +79,15 @@ def test_format_config_resend_broadcast_header():
     text = format_config_resend_broadcast_header()
     assert "извинения" in text.lower()
     assert "работает" in text.lower()
-    assert "AmneziaWG" in text
-    assert ".conf" in text
-    assert "apps.apple.com/app/amneziawg" in text
+    assert "AmneziaVPN" in text
+    assert "vpn://" in text.lower() or ".vpn" in text
+    assert "amnezia.org" in text or "apps.apple.com" in text
 
 
-def test_format_amneziawg_install_guide():
-    text = format_amneziawg_install_guide()
-    assert "AmneziaWG" in text
-    assert "Windows" in text
-    assert ".conf" in text
+def test_format_amnezia_install_guide():
+    text = format_amnezia_install_guide()
+    assert "AmneziaVPN" in text
+    assert "vpn://" in text.lower() or ".vpn" in text
 
 
 def test_format_config_broadcast_report():

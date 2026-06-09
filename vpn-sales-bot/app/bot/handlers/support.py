@@ -2,8 +2,8 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
-from app.bot.keyboards import main_menu_keyboard
 from app.bot.keyboards import back_to_menu_keyboard
+from app.bot.keyboards import main_menu_keyboard
 from app.formatters import format_vpn_delivery_hint
 
 router = Router()
@@ -11,10 +11,10 @@ router = Router()
 HELP_TEXT = (
     "FAQ\n\n"
     "1. Какое приложение нужно?\n"
-    "   AmneziaWG — клиент для протокола AWG:\n"
-    "   https://docs.amnezia.org/documentation/alternative-clients/\n\n"
+    "   AmneziaVPN — https://amnezia.org\n\n"
     "2. Как получить доступ после оплаты?\n"
-    "   Бот пришлёт файл .conf в этот чат.\n\n"
+    "   Бот пришлёт файл .vpn с ключом vpn:// в этот чат.\n"
+    "   Обычно выдача занимает несколько минут после оплаты.\n\n"
     "3. Можно ли использовать на нескольких устройствах?\n"
     "   Один ключ = один пользователь. Для семьи — отдельные тарифы.\n\n"
     "4. Подписка не продлилась?\n"

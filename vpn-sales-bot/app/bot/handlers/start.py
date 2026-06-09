@@ -17,7 +17,7 @@ router = Router()
 def welcome_text() -> str:
     return (
         "Добро пожаловать в VPN-магазин.\n\n"
-        "Быстрый и стабильный VPN на базе AmneziaWG.\n"
+        "Быстрый и стабильный VPN на базе Amnezia.\n"
         "Выберите тариф, оплатите Stars и получите персональный конфиг в этом чате.\n\n"
         f"{format_welcome_trial_line()}"
     )

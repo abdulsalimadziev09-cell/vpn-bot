@@ -30,11 +30,16 @@ from app.services.vpn_config_broadcast import (
     format_config_broadcast_report,
 )
 from app.services.vpn_delivery import send_vpn_config_files
+from app.services.vpn_give_config import give_user_vpn_config
 
 router = Router()
 
 
 class AdminApproveStates(StatesGroup):
+    waiting_config = State()
+
+
+class AdminGiveConfigStates(StatesGroup):
     waiting_config = State()
 
 
@@ -53,6 +58,21 @@ async def menu_admin(callback: CallbackQuery) -> None:
         return
 
     await callback.message.edit_text(format_admin_help(), reply_markup=admin_menu_keyboard())
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "admin:give_config")
+async def admin_give_config_button(callback: CallbackQuery) -> None:
+    if not is_admin(callback.from_user.id):
+        await callback.answer()
+        return
+
+    await callback.message.answer(
+        "Выдача конфига существующему подписчику:\n"
+        "/admin_give_config <telegram_id>\n\n"
+        "ID смотрите в /admin_subscriptions (строка «id 123456»).\n"
+        "Затем отправьте vpn:// из AmneziaVPN."
+    )
     await callback.answer()
 
 
@@ -281,12 +301,12 @@ async def cmd_admin_resend_configs(message: Message) -> None:
 
     text = (
         "📤 Массовая рассылка обновлённых конфигов\n\n"
-        f"Получат новый .conf: {with_config} пользователей\n"
+        f"Получат новый .vpn: {with_config} пользователей\n"
     )
     if without_config:
         text += f"Без конфига (пропустим): {without_config}\n"
     text += (
-        "\nКаждому уйдёт извинение, инструкция по установке AmneziaWG и актуальный .conf с VPS.\n"
+        "\nКаждому уйдёт извинение, инструкция по AmneziaVPN и актуальный .vpn.\n"
         "Подтвердите рассылку:"
     )
     await message.answer(text, reply_markup=admin_resend_configs_confirm_keyboard())
@@ -306,12 +326,12 @@ async def admin_resend_configs_button(callback: CallbackQuery) -> None:
 
     text = (
         "📤 Массовая рассылка обновлённых конфигов\n\n"
-        f"Получат новый .conf: {with_config} пользователей\n"
+        f"Получат новый .vpn: {with_config} пользователей\n"
     )
     if without_config:
         text += f"Без конфига (пропустим): {without_config}\n"
     text += (
-        "\nКаждому уйдёт извинение, инструкция по установке AmneziaWG и актуальный .conf с VPS.\n"
+        "\nКаждому уйдёт извинение, инструкция по AmneziaVPN и актуальный .vpn.\n"
         "Подтвердите рассылку:"
     )
     await callback.message.answer(text, reply_markup=admin_resend_configs_confirm_keyboard())
@@ -370,7 +390,8 @@ async def cmd_admin_approve(message: Message, state: FSMContext) -> None:
     await state.update_data(order_id=order_id)
     await message.answer(
         f"Заказ #{order_id} найден.\n"
-        "Отправьте содержимое .conf одним сообщением (текстом или файлом)."
+        "Отправьте ключ vpn:// или файл .vpn одним сообщением.\n"
+        "Также принимается .conf — бот сконвертирует в vpn://."
     )
 
 
@@ -403,7 +424,7 @@ async def admin_approve_text(message: Message, state: FSMContext) -> None:
         return
 
     if message.text.startswith("/"):
-        await message.answer("Ожидается конфиг, не команда. Отправьте .conf содержимое.")
+        await message.answer("Ожидается конфиг, не команда. Отправьте vpn:// или .vpn файл.")
         return
 
     await _finalize_approve(message, state, order_id, message.text)
@@ -426,3 +447,107 @@ async def _finalize_approve(
 
     await state.clear()
     await message.answer(f"Заказ #{order_id} выдан пользователю.")
+
+
+def _parse_telegram_id(raw: str) -> int | None:
+    value = raw.strip().removeprefix("@")
+    if not value.isdigit():
+        return None
+    return int(value)
+
+
+@router.message(Command("admin_give_config"))
+async def cmd_admin_give_config(message: Message, state: FSMContext) -> None:
+    if not is_admin(message.from_user.id):
+        return
+
+    parts = (message.text or "").split()
+    if len(parts) < 2:
+        await message.answer(
+            "Использование: /admin_give_config <telegram_id>\n"
+            "Пример: /admin_give_config 5200738946\n\n"
+            "После команды отправьте ключ vpn:// из AmneziaVPN "
+            "(или файл .vpn / .conf)."
+        )
+        return
+
+    telegram_id = _parse_telegram_id(parts[1])
+    if telegram_id is None:
+        await message.answer("Укажите числовой telegram_id пользователя.")
+        return
+
+    async with async_session_factory() as session:
+        from app.repositories.subscriptions import get_active_subscription
+
+        subscription = await get_active_subscription(session, telegram_id)
+        if not subscription:
+            await message.answer(
+                f"У пользователя id {telegram_id} нет активной подписки."
+            )
+            return
+
+    await state.set_state(AdminGiveConfigStates.waiting_config)
+    await state.update_data(telegram_id=telegram_id)
+    await message.answer(
+        f"Пользователь id {telegram_id} — активная подписка есть.\n"
+        "Отправьте ключ vpn:// или файл .vpn одним сообщением.\n"
+        "Также принимается .conf — бот сконвертирует в vpn://."
+    )
+
+
+@router.message(AdminGiveConfigStates.waiting_config, F.document)
+async def admin_give_config_document(message: Message, state: FSMContext) -> None:
+    if not is_admin(message.from_user.id):
+        return
+
+    data = await state.get_data()
+    telegram_id = data.get("telegram_id")
+    if not telegram_id:
+        await state.clear()
+        return
+
+    file = await message.bot.get_file(message.document.file_id)
+    downloaded = await message.bot.download_file(file.file_path)
+    config_text = downloaded.read().decode("utf-8")
+    await _finalize_give_config(message, state, telegram_id, config_text)
+
+
+@router.message(AdminGiveConfigStates.waiting_config, F.text)
+async def admin_give_config_text(message: Message, state: FSMContext) -> None:
+    if not is_admin(message.from_user.id):
+        return
+
+    data = await state.get_data()
+    telegram_id = data.get("telegram_id")
+    if not telegram_id:
+        await state.clear()
+        return
+
+    if message.text.startswith("/"):
+        await message.answer("Ожидается конфиг, не команда. Отправьте vpn:// или .vpn файл.")
+        return
+
+    await _finalize_give_config(message, state, telegram_id, message.text)
+
+
+async def _finalize_give_config(
+    message: Message,
+    state: FSMContext,
+    telegram_id: int,
+    config_text: str,
+) -> None:
+    async with async_session_factory() as session:
+        result = await give_user_vpn_config(
+            session,
+            message.bot,
+            telegram_id,
+            config_text,
+        )
+
+    await state.clear()
+    if not result.ok:
+        await message.answer(f"❌ {result.error}")
+        return
+
+    label = result.user_label or f"id {telegram_id}"
+    await message.answer(f"✅ Новый конфиг отправлен пользователю {label}.")

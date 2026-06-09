@@ -8,8 +8,8 @@ from aiogram.types import BufferedInputFile
 from app.config import settings
 from app.db.models import Plan, VpnAccount
 from app.formatters import format_vpn_delivery_hint
-from app.services.amnezia_export import AmneziaExportError, vpn_uri_to_awg_conf
-from app.services.awg_conf import apply_awg_enrichment, sanitize_awg_conf_for_import
+from app.services.amnezia_export import AmneziaExportError, conf_to_vpn_uri
+from app.services.awg_conf import apply_awg_enrichment
 from app.services.vpn_provisioner import is_vpn_uri
 
 logger = logging.getLogger(__name__)
@@ -26,29 +26,33 @@ def _is_awg_conf(config_text: str) -> bool:
     return config_text.strip().startswith("[Interface]")
 
 
-def _build_amneziawg_conf(config_text: str) -> str | None:
-    if _is_awg_conf(config_text):
-        source = config_text
+def _amnezia_export_kwargs() -> dict[str, str]:
+    host_name = settings.amnezia_host or settings.ssh_host
+    return {
+        "host_name": host_name,
+        "dns1": settings.amnezia_dns1,
+        "dns2": settings.amnezia_dns2,
+        "description": settings.amnezia_description,
+        "mtu": settings.amnezia_mtu,
+    }
+
+
+def build_amnezia_vpn_uri(config_text: str) -> str | None:
+    text = config_text.strip()
+    if is_vpn_uri(text):
+        return text
+
+    if _is_awg_conf(text):
+        source = text
         if not settings.vpn_skip_awg_enrichment:
-            source = apply_awg_enrichment(config_text)
-        return sanitize_awg_conf_for_import(source)
-
-    if is_vpn_uri(config_text):
+            source = apply_awg_enrichment(text)
         try:
-            return sanitize_awg_conf_for_import(vpn_uri_to_awg_conf(config_text.strip()))
-        except Exception:
-            logger.exception("Failed to extract AWG .conf from bivlked vpn:// URI")
-            return None
-
-    if not settings.vpn_skip_awg_enrichment:
-        try:
-            enriched = apply_awg_enrichment(config_text)
-            return sanitize_awg_conf_for_import(enriched)
+            return conf_to_vpn_uri(source, **_amnezia_export_kwargs())
         except AmneziaExportError:
-            logger.exception("Failed to enrich AWG .conf")
+            logger.exception("Failed to convert AWG .conf to AmneziaVPN vpn:// URI")
             return None
 
-    return sanitize_awg_conf_for_import(config_text)
+    return None
 
 
 async def send_vpn_config_files(
@@ -59,31 +63,33 @@ async def send_vpn_config_files(
     *,
     header: str = "",
 ) -> None:
-    conf_text = _build_amneziawg_conf(config_text)
+    vpn_uri = build_amnezia_vpn_uri(config_text)
 
     if header:
         await bot.send_message(chat_id, header)
 
-    if conf_text:
-        conf_file = BufferedInputFile(
-            conf_text.encode("utf-8"),
-            filename=f"{client_name}.conf",
+    if vpn_uri:
+        vpn_file = BufferedInputFile(
+            f"{vpn_uri}\n".encode("utf-8"),
+            filename=f"{client_name}.vpn",
         )
-        await bot.send_document(chat_id, conf_file, caption="Конфиг AmneziaWG (.conf)")
-        qr_file = BufferedInputFile(_qr_bytes(conf_text), filename=f"{client_name}.png")
-        await bot.send_photo(chat_id, qr_file, caption="QR для импорта в AmneziaWG")
+        await bot.send_document(chat_id, vpn_file, caption="Конфиг AmneziaVPN (.vpn)")
+        qr_file = BufferedInputFile(_qr_bytes(vpn_uri), filename=f"{client_name}.png")
+        await bot.send_photo(chat_id, qr_file, caption="QR для импорта в AmneziaVPN")
+        if len(vpn_uri) <= 3900:
+            await bot.send_message(
+                chat_id,
+                "Или вставьте ключ в AmneziaVPN → «Добавить VPN» → «Вставить из буфера»:\n\n"
+                f"<code>{vpn_uri}</code>",
+                parse_mode="HTML",
+            )
         return
 
-    fallback_conf = config_text
-    if not settings.vpn_skip_awg_enrichment and not is_vpn_uri(config_text):
-        fallback_conf = apply_awg_enrichment(config_text)
-    config_file = BufferedInputFile(
-        fallback_conf.encode("utf-8"),
-        filename=f"{client_name}.conf",
+    raw_file = BufferedInputFile(
+        config_text.encode("utf-8"),
+        filename=f"{client_name}.txt",
     )
-    qr_file = BufferedInputFile(_qr_bytes(fallback_conf), filename=f"{client_name}.png")
-    await bot.send_document(chat_id, config_file, caption="VPN-конфиг (.conf)")
-    await bot.send_photo(chat_id, qr_file, caption="QR для быстрого импорта")
+    await bot.send_document(chat_id, raw_file, caption="Конфиг (неизвестный формат)")
 
 
 async def deliver_vpn_config(

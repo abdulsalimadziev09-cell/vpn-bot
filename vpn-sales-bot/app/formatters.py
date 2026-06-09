@@ -4,9 +4,9 @@ from app.config import settings
 from app.db.models import Order, Plan, Subscription, VpnAccount
 from app.repositories.stats import AdminStats
 
-AMNEZIAWG_IOS_URL = "https://apps.apple.com/app/amneziawg/id6478942365"
-AMNEZIAWG_ANDROID_URL = "https://play.google.com/store/apps/details?id=org.amnezia.awg&hl=ru"
-AMNEZIAWG_WINDOWS_URL = "https://github.com/amnezia-vpn/amneziawg-windows-client/releases"
+AMNEZIA_IOS_URL = "https://apps.apple.com/app/amneziavpn/id1600529900"
+AMNEZIA_ANDROID_URL = "https://play.google.com/store/apps/details?id=org.amnezia.vpn&hl=ru"
+AMNEZIA_DESKTOP_URL = "https://amnezia.org"
 
 
 def subscription_days_remaining(subscription: Subscription) -> int:
@@ -27,7 +27,7 @@ def format_renewal_message(subscription: Subscription, plan: Plan) -> str:
     return (
         f"✅ Подписка продлена: {plan.title}.\n"
         f"Действует до: {expires}\n\n"
-        "Ваш VPN-конфиг не изменился — используйте прежний .conf.\n"
+        "Ваш VPN-конфиг не изменился — используйте прежний ключ.\n"
         "Повторно получить конфиг: /my → «Получить конфиг»."
     )
 
@@ -81,23 +81,23 @@ def client_name_for_user(telegram_id: int) -> str:
 
 def format_download_app() -> str:
     return (
-        "Скачайте клиент AmneziaWG:\n\n"
-        f"📱 iOS: {AMNEZIAWG_IOS_URL}\n"
-        f"🤖 Android: {AMNEZIAWG_ANDROID_URL}\n"
-        f"💻 Windows: {AMNEZIAWG_WINDOWS_URL}\n\n"
-        "После установки импортируйте файл .conf из этого бота "
-        "(нативный формат AmneziaWG, генерирует bivlked на сервере)."
+        "Скачайте приложение AmneziaVPN:\n\n"
+        f"📱 iOS: {AMNEZIA_IOS_URL}\n"
+        f"🤖 Android: {AMNEZIA_ANDROID_URL}\n"
+        f"💻 Windows / macOS / Linux: {AMNEZIA_DESKTOP_URL}\n\n"
+        "После установки импортируйте файл .vpn из этого бота "
+        "или вставьте ключ vpn:// в приложение."
     )
 
 
 def format_about_service() -> str:
     return (
         "О сервисе\n\n"
-        "Мы предоставляем персональный VPN на базе AmneziaWG — "
+        "Мы предоставляем персональный VPN на базе Amnezia — "
         "стабильный протокол с обфускацией для обхода блокировок.\n\n"
         "• Один ключ — один пользователь\n"
         "• Оплата через Telegram Stars\n"
-        "• Конфиг .conf (нативный AWG от сервера) приходит сразу после оплаты\n"
+        "• Ключ vpn:// (.vpn) приходит после выдачи администратором\n"
         "• Напоминания перед окончанием подписки\n"
         f"• Пробный период: {settings.trial_days} {_days_word(settings.trial_days)} (один раз)\n"
         f"• Бонус за друга: +{settings.referral_bonus_days} {_days_word(settings.referral_bonus_days)}\n\n"
@@ -178,18 +178,17 @@ def format_expiry_reminder(days_left: int) -> str:
 def format_vpn_delivery_hint() -> str:
     return (
         "Как подключиться:\n"
-        f"1. Скачайте AmneziaWG на iOS: {AMNEZIAWG_IOS_URL}\n"
-        f"2. Скачайте AmneziaWG на Android: {AMNEZIAWG_ANDROID_URL}\n"
-        f"3. Скачайте AmneziaWG на Windows: {AMNEZIAWG_WINDOWS_URL}\n"
-        "4. Откройте AmneziaWG → «Импорт конфигурации»\n"
-        "5. Выберите файл .conf из бота (или отсканируйте QR)\n"
+        f"1. Скачайте AmneziaVPN на iOS: {AMNEZIA_IOS_URL}\n"
+        f"2. Скачайте AmneziaVPN на Android: {AMNEZIA_ANDROID_URL}\n"
+        f"3. Скачайте AmneziaVPN на ПК: {AMNEZIA_DESKTOP_URL}\n"
+        "4. Откройте AmneziaVPN → «Добавить VPN»\n"
+        "5. Импортируйте файл .vpn из бота или вставьте ключ vpn://\n"
         "6. Подключитесь к VPN\n\n"
-        "При необходимости можно перейти по туннлю -> Править (справа сверху) -> Ниже включить АВТОПОДКЛЮЮЧЕНИЕ.\n"
-        "Актуальный .conf: /my → «Получить конфиг»."
+        "Актуальный ключ: /my → «Получить конфиг»."
     )
 
 
-def format_amneziawg_install_guide() -> str:
+def format_amnezia_install_guide() -> str:
     return f"{format_download_app()}\n\n{format_vpn_delivery_hint()}"
 
 
@@ -197,9 +196,17 @@ def format_config_resend_broadcast_header() -> str:
     return (
         "🙏 Приносим извинения за перебои с VPN.\n\n"
         "Мы всё исправили — ниже актуальный конфиг, VPN снова работает.\n"
-        "Если старый конфиг уже был в приложении — удалите его и импортируйте новый.\n" 
-        "При необходимости можно перейти по туннлю -> Править (справа сверху) -> Ниже включить АВТОПОДКЛЮЮЧЕНИЕ.\n\n"
-        f"{format_amneziawg_install_guide()}"
+        "Если старый ключ уже был в приложении — удалите его и импортируйте новый.\n\n"
+        f"{format_amnezia_install_guide()}"
+    )
+
+
+def format_admin_manual_provision_hint() -> str:
+    return (
+        "Создайте клиента в AmneziaVPN на сервере:\n"
+        "Подключения → ваш сервер → Поделиться → "
+        "«Для приложения AmneziaVPN».\n"
+        "Скопируйте ключ vpn:// и отправьте ответом на /admin_approve."
     )
 
 
