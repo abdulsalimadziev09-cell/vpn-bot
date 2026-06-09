@@ -1,0 +1,10 @@
+# Telegram Mini App — HTTPS для nexussvpn.ru
+# Caddy сам получит сертификат Let's Encrypt (нужны открытые 80/443 и A-запись на VPS).
+
+www.nexussvpn.ru {
+	reverse_proxy mini-app:80
+}
+
+nexussvpn.ru {
+	redir https://www.nexussvpn.ru{uri} permanent
+}

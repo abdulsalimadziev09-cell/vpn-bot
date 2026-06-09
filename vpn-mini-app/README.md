@@ -38,24 +38,87 @@ docker compose up -d --build
 
 Mini App на `http://localhost:8081`.
 
-### Продакшен
+### Продакшен (nexussvpn.ru + SSL)
 
-1. Соберите и разместите `dist/` на домене с **HTTPS**
-2. В `.env` бота укажите:
+Нужен VPS с Docker, домен `nexussvpn.ru`, бот и Mini App на **одной** машине.
 
-```env
-MINI_APP_URL=https://your-domain.example/
-```
+#### 1. DNS у регистратора
 
-3. В [@BotFather](https://t.me/BotFather):
-   - `/setdomain` — привяжите тот же домен к боту
-   - `/setmenubutton` — URL Mini App (опционально)
+| Запись | Тип | Значение |
+|--------|-----|----------|
+| `@` | A | IP вашего VPS |
+| `www` | A | тот же IP (или CNAME → `nexussvpn.ru`) |
 
-4. Проверка Lava:
+Подождите 5–30 минут, пока DNS обновится:
 
 ```bash
-curl https://your-domain.example/lava-verify_751e93edad61d6f3.html
+dig +short www.nexussvpn.ru
 ```
+
+#### 2. Фаервол на VPS
+
+Откройте **80** и **443** (для Let's Encrypt и HTTPS):
+
+```bash
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw reload
+```
+
+Порты бота (`8080`) и VPN (`42923/udp`) можно не трогать — Mini App идёт через 443.
+
+#### 3. Mini App с автоматическим SSL (Caddy)
+
+На VPS, в каталоге `vpn-mini-app`:
+
+```bash
+cd vpn-mini-app
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Caddy сам выпустит сертификат для `www.nexussvpn.ru` и `nexussvpn.ru`.
+Локальный `docker compose up` (порт `8081`) для прода **не** нужен — остановите, если мешает:
+
+```bash
+docker compose down
+```
+
+Проверка:
+
+```bash
+curl -I https://www.nexussvpn.ru/
+curl https://www.nexussvpn.ru/lava-verify_751e93edad61d6f3.html
+```
+
+#### 4. Подключить к боту
+
+В `vpn-sales-bot/.env` на VPS:
+
+```env
+MINI_APP_URL=https://www.nexussvpn.ru/
+```
+
+Перезапуск бота:
+
+```bash
+cd ../vpn-sales-bot
+docker compose up -d --build
+```
+
+#### 5. Telegram BotFather
+
+В [@BotFather](https://t.me/BotFather) для `@nexussvpnbot`:
+
+1. `/setdomain` → выберите бота → введите `www.nexussvpn.ru`
+2. `/setmenubutton` (опционально) → URL: `https://www.nexussvpn.ru/`
+
+В боте появится кнопка **«Открыть приложение»**.
+
+> **Важно:** URL в `MINI_APP_URL`, домен в BotFather и домен в `Caddyfile` должны совпадать (`www.nexussvpn.ru`).
+
+#### Другой домен
+
+Отредактируйте `Caddyfile`, затем `docker compose -f docker-compose.prod.yml up -d --build`.
 
 ## Связь с ботом
 

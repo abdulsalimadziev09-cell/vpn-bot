@@ -37,11 +37,13 @@ npm install && npm run build
 docker compose up -d --build
 ```
 
-В `vpn-sales-bot/.env` укажите URL Mini App:
+В `vpn-sales-bot/.env` укажите URL Mini App (пример для nexussvpn.ru):
 
 ```env
-MINI_APP_URL=https://your-domain.example/
+MINI_APP_URL=https://www.nexussvpn.ru/
 ```
+
+SSL и деплой Mini App — см. [`vpn-mini-app/README.md`](vpn-mini-app/README.md) (Caddy + Let's Encrypt).
 
 ### 3. Обменник Stars
 
