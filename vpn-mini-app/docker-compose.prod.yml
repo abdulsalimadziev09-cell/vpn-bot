@@ -15,6 +15,11 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
+    # На VPS с xray/3x-ui systemd-resolved (127.0.0.53) из Docker часто недоступен —
+    # без этого Let's Encrypt не выпустит сертификат.
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

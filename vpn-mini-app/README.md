@@ -120,6 +120,36 @@ docker compose up -d --build
 
 Отредактируйте `Caddyfile`, затем `docker compose -f docker-compose.prod.yml up -d --build`.
 
+#### Ошибки SSL
+
+**`TLS handshake failure` + в `ss` на `:443` виден `xray`**
+
+На VPS уже крутится **xray / 3x-ui** на порту 443. Mini App тоже нужен 443 — освободите его:
+
+```bash
+sudo ss -tlnp | grep ':443'
+ps aux | grep xray
+```
+
+В панели 3x-ui (или в конфиге xray) смените порт inbound с **443** на другой, например **8443** или **2053**, перезапустите xray. Затем:
+
+```bash
+docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+**В логах Caddy: `lookup acme-v02.api.letsencrypt.org ... connection refused`**
+
+DNS внутри Docker не работает. В `docker-compose.prod.yml` для Caddy уже прописаны `8.8.8.8` / `1.1.1.1` — сделайте `git pull` и пересоздайте контейнер.
+
+**Проверка после исправлений:**
+
+```bash
+sudo ss -tlnp | grep -E ':80|:443'   # docker-proxy / caddy, не xray
+docker compose -f docker-compose.prod.yml logs caddy --tail 20
+curl -I https://www.nexussvpn.ru/
+```
+
 ## Связь с ботом
 
 Mini App отправляет JSON в бот:
