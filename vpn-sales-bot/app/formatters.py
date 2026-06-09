@@ -127,10 +127,14 @@ def format_admin_subscription_line(subscription: Subscription) -> str:
     days_left = subscription_days_remaining(subscription)
     days_word = _days_word(days_left)
     expires = subscription.expires_at.astimezone(timezone.utc).strftime("%d.%m.%Y %H:%M")
-    label = format_user_label(user.telegram_id, user.username) if user else f"id {subscription.user_id}"
+    if user:
+        label = format_user_label(user.telegram_id, user.username)
+        user_ref = f"{label} · id {user.telegram_id}"
+    else:
+        user_ref = f"id {subscription.user_id}"
     trial_mark = " 🎁" if days_left <= settings.trial_days else ""
     return (
-        f"{label}{trial_mark} — осталось {days_left} {days_word} — до {expires} UTC "
+        f"{user_ref}{trial_mark} — осталось {days_left} {days_word} — до {expires} UTC "
         f"({subscription.plan.title})"
     )
 

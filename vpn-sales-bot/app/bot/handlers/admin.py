@@ -15,6 +15,7 @@ from app.db.session import async_session_factory
 from app.formatters import format_admin_stats, format_order_admin
 from app.repositories.stats import get_admin_stats
 from app.repositories.orders import get_order_by_id, list_orders_by_status
+from app.repositories.users import get_user_by_username
 from app.services.admin_report import send_admin_subscriptions_report
 from app.services.payment import approve_manual_order
 from app.services.vpn_admin_test import (
@@ -69,8 +70,8 @@ async def admin_give_config_button(callback: CallbackQuery) -> None:
 
     await callback.message.answer(
         "Выдача конфига существующему подписчику:\n"
-        "/admin_give_config <telegram_id>\n\n"
-        "ID смотрите в /admin_subscriptions (строка «id 123456»).\n"
+        "/admin_give_config <telegram_id или @username>\n\n"
+        "Пример: /admin_give_config @alllimov\n"
         "Затем отправьте vpn:// из AmneziaVPN."
     )
     await callback.answer()
@@ -449,11 +450,20 @@ async def _finalize_approve(
     await message.answer(f"Заказ #{order_id} выдан пользователю.")
 
 
-def _parse_telegram_id(raw: str) -> int | None:
-    value = raw.strip().removeprefix("@")
-    if not value.isdigit():
-        return None
-    return int(value)
+async def _resolve_give_config_target(raw: str) -> tuple[int | None, str | None]:
+    value = raw.strip()
+    if not value:
+        return None, "Укажите telegram_id или @username."
+
+    if value.removeprefix("@").isdigit():
+        return int(value.removeprefix("@")), None
+
+    async with async_session_factory() as session:
+        user = await get_user_by_username(session, value)
+
+    if not user:
+        return None, f"Пользователь {value} не найден в боте."
+    return user.telegram_id, None
 
 
 @router.message(Command("admin_give_config"))
@@ -461,19 +471,21 @@ async def cmd_admin_give_config(message: Message, state: FSMContext) -> None:
     if not is_admin(message.from_user.id):
         return
 
-    parts = (message.text or "").split()
+    parts = (message.text or "").split(maxsplit=1)
     if len(parts) < 2:
         await message.answer(
-            "Использование: /admin_give_config <telegram_id>\n"
-            "Пример: /admin_give_config 5200738946\n\n"
-            "После команды отправьте ключ vpn:// из AmneziaVPN "
-            "(или файл .vpn / .conf)."
+            "Использование: /admin_give_config <telegram_id или @username>\n"
+            "Примеры:\n"
+            "/admin_give_config 5200738946\n"
+            "/admin_give_config @alllimov\n\n"
+            "ID смотрите в /admin_subscriptions.\n"
+            "После команды отправьте ключ vpn:// из AmneziaVPN."
         )
         return
 
-    telegram_id = _parse_telegram_id(parts[1])
-    if telegram_id is None:
-        await message.answer("Укажите числовой telegram_id пользователя.")
+    telegram_id, error = await _resolve_give_config_target(parts[1])
+    if error or telegram_id is None:
+        await message.answer(error or "Не удалось определить пользователя.")
         return
 
     async with async_session_factory() as session:

@@ -1,7 +1,5 @@
-import io
 import logging
 
-import qrcode
 from aiogram import Bot
 from aiogram.types import BufferedInputFile
 
@@ -13,13 +11,6 @@ from app.services.awg_conf import apply_awg_enrichment
 from app.services.vpn_provisioner import is_vpn_uri
 
 logger = logging.getLogger(__name__)
-
-
-def _qr_bytes(payload: str) -> bytes:
-    image = qrcode.make(payload)
-    buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
-    return buffer.getvalue()
 
 
 def _is_awg_conf(config_text: str) -> bool:
@@ -73,23 +64,14 @@ async def send_vpn_config_files(
             f"{vpn_uri}\n".encode("utf-8"),
             filename=f"{client_name}.vpn",
         )
-        await bot.send_document(chat_id, vpn_file, caption="Конфиг AmneziaVPN (.vpn)")
-        qr_file = BufferedInputFile(_qr_bytes(vpn_uri), filename=f"{client_name}.png")
-        await bot.send_photo(chat_id, qr_file, caption="QR для импорта в AmneziaVPN")
-        if len(vpn_uri) <= 3900:
-            await bot.send_message(
-                chat_id,
-                "Или вставьте ключ в AmneziaVPN → «Добавить VPN» → «Вставить из буфера»:\n\n"
-                f"<code>{vpn_uri}</code>",
-                parse_mode="HTML",
-            )
+        await bot.send_document(chat_id, vpn_file)
         return
 
     raw_file = BufferedInputFile(
         config_text.encode("utf-8"),
         filename=f"{client_name}.txt",
     )
-    await bot.send_document(chat_id, raw_file, caption="Конфиг (неизвестный формат)")
+    await bot.send_document(chat_id, raw_file)
 
 
 async def deliver_vpn_config(

@@ -36,8 +36,8 @@ async def test_send_vpn_config_files_sends_vpn_document() -> None:
     await send_vpn_config_files(bot, 101, "tg_101", vpn_uri)
 
     bot.send_document.assert_awaited_once()
+    bot.send_photo.assert_not_called()
+    bot.send_message.assert_not_called()
     document = bot.send_document.await_args.args[1]
     assert document.filename == "tg_101.vpn"
     assert document.data.decode("utf-8").startswith("vpn://")
-    bot.send_photo.assert_awaited_once()
-    bot.send_message.assert_awaited_once()
