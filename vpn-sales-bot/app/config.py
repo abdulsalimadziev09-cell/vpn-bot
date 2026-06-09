@@ -1,5 +1,7 @@
+from typing import Annotated
+
 from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -7,7 +9,7 @@ class Settings(BaseSettings):
 
     bot_token: str = "test-token"
     database_url: str = "postgresql+asyncpg://vpnbot:vpnbot@localhost:5432/vpnbot"
-    admin_ids: list[int] = []
+    admin_ids: Annotated[list[int], NoDecode] = []
 
     payments_enabled: bool = True
     mini_app_url: str = ""
