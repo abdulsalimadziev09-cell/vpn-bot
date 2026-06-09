@@ -5,7 +5,9 @@ import {
   PLANS,
   REFERRAL_BONUS_DAYS,
   SETUP_STEPS,
+  STARS_BUY_BOT_URL,
   TRIAL_DAYS,
+  minStarsPrice,
 } from "./data";
 import { greetingName, initTelegram, sendAction } from "./telegram";
 
@@ -50,9 +52,9 @@ function render(): void {
         </div>
       </div>
       <h1>Привет, ${name}!</h1>
-      <p>Персональный VPN с выдачей конфига в Telegram. Выберите тариф, подключитесь за пару минут.</p>
+      <p>Быстрый и стабильный VPN на базе Amnezia. Выберите тариф, оплатите Stars и получите персональный конфиг в чате с ботом.</p>
       <div class="stats">
-        <div class="stat"><strong>150 ⭐</strong><span>от / мес</span></div>
+        <div class="stat"><strong>${minStarsPrice()} ⭐</strong><span>от / мес</span></div>
         <div class="stat"><strong>${TRIAL_DAYS} дн.</strong><span>пробный</span></div>
         <div class="stat"><strong>+${REFERRAL_BONUS_DAYS} дн.</strong><span>за друга</span></div>
       </div>
@@ -89,7 +91,7 @@ function render(): void {
         ).join("")}
       </div>
       <div class="actions">
-        <button class="action-btn primary" data-action="referral">Приведи друга — +${REFERRAL_BONUS_DAYS} дня</button>
+        <button class="action-btn primary" data-action="referral">Приведи друга — +${REFERRAL_BONUS_DAYS} дня к подписке</button>
       </div>
     </section>
 
@@ -108,11 +110,13 @@ function render(): void {
       <div class="downloads">
         <a class="download-link" href="${DOWNLOAD_LINKS.ios}" target="_blank" rel="noopener">📱 iOS</a>
         <a class="download-link" href="${DOWNLOAD_LINKS.android}" target="_blank" rel="noopener">🤖 Android</a>
+        <a class="download-link" href="${DOWNLOAD_LINKS.desktop}" target="_blank" rel="noopener">💻 ПК</a>
+        <a class="download-link" href="${STARS_BUY_BOT_URL}" target="_blank" rel="noopener">⭐ Купить Stars</a>
       </div>
     </section>
 
     <p class="footer-note">
-      Оплата через Telegram Stars. Конфиг и QR приходят в чат с ботом после оплаты.
+      Оплата через Telegram Stars. Файл .vpn с ключом vpn:// приходит в чат после выдачи администратором.
     </p>
   `;
 
