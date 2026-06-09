@@ -67,6 +67,8 @@ class Settings(BaseSettings):
 
     admin_subscription_report_enabled: bool = True
     admin_subscription_report_hours: int = 12
+    admin_expiry_alert_hours: int = 1
+    admin_expiry_alert_poll_minutes: int = 15
 
     @field_validator("admin_ids", mode="before")
     @classmethod

@@ -139,6 +139,23 @@ def format_admin_subscription_line(subscription: Subscription) -> str:
     )
 
 
+def format_admin_expiry_alert(subscription: Subscription) -> str:
+    user = subscription.user
+    expires = subscription.expires_at.astimezone(timezone.utc).strftime("%d.%m.%Y %H:%M")
+    if user:
+        label = format_user_label(user.telegram_id, user.username)
+        user_ref = f"{label} · id {user.telegram_id}"
+    else:
+        user_ref = f"id {subscription.user_id}"
+    return (
+        "⚠️ Подписка скоро закончится\n\n"
+        f"{user_ref}\n"
+        "До окончания: менее часа\n"
+        f"Истекает: {expires} UTC\n"
+        f"Тариф: {subscription.plan.title}"
+    )
+
+
 def build_admin_subscriptions_report(subscriptions: list[Subscription]) -> list[str]:
     if not subscriptions:
         return ["📊 Активных подписок нет."]

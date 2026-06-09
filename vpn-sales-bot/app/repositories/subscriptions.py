@@ -64,6 +64,25 @@ async def list_expiring_subscriptions(
     return list(result.scalars().unique().all())
 
 
+async def list_subscriptions_for_admin_expiry_alert(
+    session: AsyncSession,
+    within_hours: int,
+) -> list[Subscription]:
+    now = datetime.now(timezone.utc)
+    deadline = now + timedelta(hours=within_hours)
+    result = await session.execute(
+        select(Subscription)
+        .options(joinedload(Subscription.plan), joinedload(Subscription.user))
+        .where(
+            Subscription.status == SubscriptionStatus.ACTIVE,
+            Subscription.expires_at > now,
+            Subscription.expires_at <= deadline,
+            Subscription.admin_reminded_1h.is_(False),
+        )
+    )
+    return list(result.scalars().unique().all())
+
+
 async def list_expired_active(session: AsyncSession) -> list[Subscription]:
     now = datetime.now(timezone.utc)
     result = await session.execute(

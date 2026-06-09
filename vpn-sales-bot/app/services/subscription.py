@@ -25,6 +25,7 @@ async def activate_or_extend_subscription(
         subscription.reminded_7d = False
         subscription.reminded_3d = False
         subscription.reminded_1d = False
+        subscription.admin_reminded_1h = False
         return subscription
 
     subscription = Subscription(

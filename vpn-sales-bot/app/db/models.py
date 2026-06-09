@@ -123,6 +123,7 @@ class Subscription(Base):
     reminded_7d: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     reminded_3d: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     reminded_1d: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    admin_reminded_1h: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped["User"] = relationship(back_populates="subscriptions")

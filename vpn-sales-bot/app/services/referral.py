@@ -22,6 +22,7 @@ async def add_bonus_days(session: AsyncSession, user_id: int, days: int) -> Subs
         subscription.reminded_7d = False
         subscription.reminded_3d = False
         subscription.reminded_1d = False
+        subscription.admin_reminded_1h = False
         return subscription
 
     plan = await get_plan_by_code(session, "month_1")
